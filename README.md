@@ -2,11 +2,11 @@
 
 | Student's name | SCIPER |
 | -------------- | ------ |
-| | |
-| Anna Tuz | |
-| | |
+| Anna Tuz | 416460 |
+| Margaux Anne Elbaum | 415343 |
+| Yasmine Hidri	| 346771 |
 
-[Milestone 1](#milestone-1) • [Milestone 2](#milestone-2) • [Milestone 3](#milestone-3)
+[Milestone 1](#milestone_1/README.md) • [Milestone 2](#milestone_2) • [Milestone 3](#milestone_3)
 
 ## Milestone 1 (20th March, 5pm)
 
