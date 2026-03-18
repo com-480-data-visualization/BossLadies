@@ -72,6 +72,19 @@ What makes our approach original is that, unlike typical meal planners, it focus
 
 
 > - What source of inspiration do you take? Visualizations that you found on other websites or magazines (might be unrelated to your data).
+
+Our main objective is to present food and nutritional information in a clear, insightful, and visually engaging way through a variety of interactive visualizations. A key tool will be polar charts, which allow users to quickly see the macro- and micronutrient composition of each food item. These charts will also support comparisons between two food items, making nutritional differences immediately visible.
+Additional visualizations will include parallel coordinates diagrams to provide an overview of all food items, and network diagrams to highlight foods with similar nutritional profiles. Polar area charts will allow users to compare multiple foods at a glance, with longer arms representing higher nutrient values such as calories, fiber, or sugar. Another visualization will illustrate how a plate should be composed based on user input, showing the relative proportions of vegetables, proteins, carbs, and fats.
+To refine our approach and enhance our visualizations, we draw inspiration from various sources:
+
+• BiteKit: Offers visual food comparisons and a TDEE calculator, as well as a comprehensive nutrition database, serving as a reference for functionality and user experience.
+• Observable NotHotDog Nutrition Visualizer: Demonstrates effective polar chart visualizations and comparison of nutrients relative to daily values.
+• Data visualization resources: Websites like Data Viz Catalogue and Data Viz Project provide examples of visualization techniques, helping us select the most effective ways to represent our nutritional data.
+
+These references guide our design choices, ensuring a rich and intuitive visual representation of food items and their nutritional properties, allowing users to explore, compare, and make informed dietary decisions on a single, accessible platform.
+
+
+
 > - In case you are using a dataset that you have already explored in another context (ML or ADA course, semester project...), you are required to share the report of that work to outline the differences with the submission for this class.
 
 ## Milestone 2 (17th April, 5pm)
