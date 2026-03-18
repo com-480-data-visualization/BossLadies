@@ -24,6 +24,7 @@ Please, fill the following sections about your project.
 > Hint: some good pointers for finding quality publicly available datasets ([Google dataset search](https://datasetsearch.research.google.com/), [Kaggle](https://www.kaggle.com/datasets), [OpenSwissData](https://opendata.swiss/en/), [SNAP](https://snap.stanford.edu/data/) and [FiveThirtyEight](https://data.fivethirtyeight.com/)).
 
 For this project, we use the Food Nutrition Dataset available on Kaggle: https://www.kaggle.com/datasets/utsavdey1410/food-nutrition-dataset
+
 This dataset contains nutritional information for a wide range of food items, including calories, macronutrients (proteins, fats, carbohydrates), as well as several vitamins and minerals. Each food is described through multiple numerical features, usually expressed per 100g, which makes comparisons between foods straightforward.
 However, some preprocessing is still required:
 -  handling missing values (especially for micronutrients),
