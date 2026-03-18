@@ -22,17 +22,13 @@ Please, fill the following sections about your project.
 > Find a dataset (or multiple) that you will explore. Assess the quality of the data it contains and how much preprocessing / data-cleaning it will require before tackling visualization. We recommend using a standard dataset as this course is not about scraping nor data processing.
 >
 > Hint: some good pointers for finding quality publicly available datasets ([Google dataset search](https://datasetsearch.research.google.com/), [Kaggle](https://www.kaggle.com/datasets), [OpenSwissData](https://opendata.swiss/en/), [SNAP](https://snap.stanford.edu/data/) and [FiveThirtyEight](https://data.fivethirtyeight.com/)).
->
-> For this project, we use the Food Nutrition Dataset available on Kaggle: https://www.kaggle.com/datasets/utsavdey1410/food-nutrition-dataset
-> This dataset contains nutritional information for a wide range of food items, including calories, macronutrients (proteins, fats, carbohydrates), as well as several vitamins and minerals. Each food is described through multiple numerical features, usually expressed per 100g, which makes comparisons between foods straightforward.
-> However, some preprocessing is still required:
 
-handling missing values (especially for micronutrients),
-
-standardizing units,
-
-reducing the number of variables to keep the most relevant ones for visualization.
-
+For this project, we use the Food Nutrition Dataset available on Kaggle: https://www.kaggle.com/datasets/utsavdey1410/food-nutrition-dataset
+This dataset contains nutritional information for a wide range of food items, including calories, macronutrients (proteins, fats, carbohydrates), as well as several vitamins and minerals. Each food is described through multiple numerical features, usually expressed per 100g, which makes comparisons between foods straightforward.
+However, some preprocessing is still required:
+-  handling missing values (especially for micronutrients),
+-  standardizing units,
+-  reducing the number of variables to keep the most relevant ones for visualization.
 Overall, the dataset is rich and suitable for multi-dimensional analysis, but needs moderate cleaning and feature selection to avoid overly complex visualizations.
 
 ### Problematic
@@ -41,13 +37,11 @@ Overall, the dataset is rich and suitable for multi-dimensional analysis, but ne
 > - What am I trying to show with my visualization?
 > - Think of an overview for the project, your motivation, and the target audience.
 >
->   Choosing what to eat is not as simple as it seems. Each food combines many nutritional components (calories, fats, sugars, proteins) and understanding how they interact is often confusing. Most tools present this information in static ways, without adapting to individual needs.
+Choosing what to eat is not as simple as it seems. Each food combines many nutritional components (calories, fats, sugars, proteins) and understanding how they interact is often confusing. Most tools present this information in static ways, without adapting to individual needs.
 
 The main idea of our project is to create an interactive visualization that adapts to the user. Instead of exploring food data in a generic way, users will be able to input their own context:
-
-dietary restrictions (e.g., gluten-free, low sugar, vegetarian),
-
-and personal information such as weight, height, sex, and activity level (or directly a target calorie intake).
+-  dietary restrictions (e.g., gluten-free, low sugar, vegetarian),
+-  and personal information such as weight, height, sex, and activity level (or directly a target calorie intake).
 
 Based on this, the system will compute personalized nutritional requirements, including caloric needs and macronutrient targets. It will then suggest suitable food options and recommended portions, ensuring that both nutritional goals and dietary constraints are respected.
 
