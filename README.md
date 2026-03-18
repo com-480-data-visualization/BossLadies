@@ -62,6 +62,7 @@ The target audience includes students, young adults, and anyone interested in be
 
 
 > - What others have already done with the data?
+This dataset has already seen extensive use in a variety of projects. Some efforts focus on meal planning, generating daily or weekly plans for users, while others employ content-based recommendation systems that suggest recipes similar to those a user already prefers. Predictive health modeling has also been explored, using food and nutrition data to estimate health outcomes. More advanced applications include image-to-recipe models, which take a photo of a dish and return matching recipes with nutrition information, ingredients and instructions. Another project is an AI-powered meal planners, integrating Gemini 2.0, further personalize plans based on user preferences, fitness goals, target nutrients, and dietary restrictions (e.g., keto, halal, vegan). Other work includes BMI-based meal plan generator and nutrition prediction models, like those estimating sugar content in foods. 
 > - Why is your approach original?
 > - What source of inspiration do you take? Visualizations that you found on other websites or magazines (might be unrelated to your data).
 > - In case you are using a dataset that you have already explored in another context (ML or ADA course, semester project...), you are required to share the report of that work to outline the differences with the submission for this class.
