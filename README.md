@@ -30,6 +30,7 @@ However, some preprocessing is still required:
 -  handling missing values (especially for micronutrients),
 -  standardizing units,
 -  reducing the number of variables to keep the most relevant ones for visualization.
+  
 Overall, the dataset is rich and suitable for multi-dimensional analysis, but needs moderate cleaning and feature selection to avoid overly complex visualizations.
 
 ### Problematic
