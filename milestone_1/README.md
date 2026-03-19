@@ -30,6 +30,12 @@ Our motivation comes from the difficulty of translating general nutritional guid
 The target audience includes students, young adults, and anyone interested in better understanding their diet or managing specific constraints.
 
 ### Exploratory Data Analysis
+Our exploratory data analysis is available on our Git repository, under milestone_1/food_results.ipynb. 
+
+Our dataset originally consists of five separate files, each containing identical nutritional features but different food items. These datasets were merged into a single dataset for subsequent analysis.
+The dataset includes a wide range of variables describing both macro- and micronutrients, such as caloric value, fats (and their subtypes), carbohydrates, proteins, vitamins, and minerals.
+
+
 
 
 ### Related work
