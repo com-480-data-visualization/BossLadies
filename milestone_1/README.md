@@ -35,6 +35,8 @@ Our exploratory data analysis is available on our Git repository, under mileston
 Our dataset originally consists of five separate files, each containing identical nutritional features but different food items. These datasets were merged into a single dataset for subsequent analysis.
 The dataset includes a wide range of variables describing both macro- and micronutrients, such as caloric value, fats (and their subtypes), carbohydrates, proteins, vitamins, and minerals.
 
+Some nutritional components are more relevant for this project than others, as they correspond to what people are typically most interested in, namely caloric value, protein, fats, and sugars. Focusing on these variables, we plotted the top 10 foods with the highest values for each, resulting in the four graphs shown below.
+
 
 
 
