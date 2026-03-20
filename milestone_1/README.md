@@ -38,6 +38,10 @@ Some nutritional components are more relevant for this project than others, as t
 
 
 ![Alt text](figures/top_fat.png)
+![Alt text](figures/top_caloric_value.png)
+![Alt text](figures/top_protein.png)
+![Alt text](figures/top_sugars.png)
+
 
 
 ### Related work
