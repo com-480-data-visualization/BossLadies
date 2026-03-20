@@ -56,8 +56,12 @@ Additional visualizations will include parallel coordinates diagrams to provide 
 
 To refine our approach and enhance our visualizations, we draw inspiration from various sources:
 
-- BiteKit: Offers visual food comparisons and a TDEE calculator, as well as a comprehensive nutrition database, serving as a reference for functionality and user experience.
-- Observable NotHotDog Nutrition Visualizer: Demonstrates effective polar chart visualizations and comparison of nutrients relative to daily values.
-- Data visualization resources: Websites like Data Viz Catalogue and Data Viz Project provide examples of visualization techniques, helping us select the most effective ways to represent our nutritional data.
+- BiteKit: Offers visual food comparisons and a TDEE calculator, as well as a comprehensive nutrition database, serving as a reference for functionality and user experience. 
+https://bitekit.app/tools/
+- Observable NotHotDog Nutrition Visualizer: Demonstrates effective polar chart visualizations and comparison of nutrients relative to daily values. 
+https://observablehq.com/@nothotdog/nutrition-data-visualizer
+- Data visualization resources: Websites like Data Viz Catalogue and Data Viz Project provide examples of visualization techniques, helping us select the most effective ways to represent our nutritional data. 
+https://datavizcatalogue.com/FR/
+https://datavizproject.com
 
 These references guide our design choices, ensuring a rich and intuitive visual representation of food items and their nutritional properties, allowing users to explore, compare, and make informed dietary decisions on a single, accessible platform.
