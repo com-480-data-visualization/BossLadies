@@ -63,7 +63,9 @@ To refine our approach and enhance our visualizations, we draw inspiration from 
 
 These references guide our design choices, ensuring a rich and intuitive visual representation of food items and their nutritional properties, allowing users to explore, compare, and make informed dietary decisions on a single, accessible platform.
 
-Our sources of inspiration can be found on the following links
+### References 
+
+Our main sources of inspiration are available at the following links:
 - https://bitekit.app/tools/
 - https://observablehq.com/@nothotdog/nutrition-data-visualizer
 - https://datavizcatalogue.com/FR/
