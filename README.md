@@ -10,7 +10,7 @@
 
 ## Milestone 1 (20th March, 5pm)
 
-**The report for Milestone one can be found here: [Milestone 1](milestone_1/README.md)**
+**The report for Milestone 1 can be found [here](milestone_1/README.md)**
 
 
 **10% of the final grade**
