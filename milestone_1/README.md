@@ -36,6 +36,7 @@ The dataset includes a wide range of variables describing both macro- and micron
 
 Some nutritional components are more relevant for this project than others, as they correspond to what people are typically most interested in, namely caloric value, protein, fats, and sugars. Focusing on these variables, we plotted the top 10 foods with the highest values for each, resulting in the four graphs shown below.
 
+We can already see some interesting facts in these pictures, and our visualizations will make them even more informative. Our dataset contains no missing values, ensuring that the rankings we observe are based on complete information. However, there were some outliers, which have been treated for these graphs. Interestingly, some foods considered healthy, like macadamia nuts and pecans, rank very high in fat. In addition, chickpea flour and microwave popcorn are quite caloric. Other observations are less surprising, as sweets and processed chocolate bars contain a lot of sugar.
 
 ![Alt text](figures/top_fat.png)
 ![Alt text](figures/top_caloric_value.png)
