@@ -37,7 +37,7 @@ The dataset includes a wide range of variables describing both macro- and micron
 Some nutritional components are more relevant for this project than others, as they correspond to what people are typically most interested in, namely caloric value, protein, fats, and sugars. Focusing on these variables, we plotted the top 10 foods with the highest values for each, resulting in the four graphs shown below.
 
 
-![Alt text](../../data_viz_mil_1/fat_food.png)
+![Alt text](../figures/top_fat.png)
 
 
 ### Related work
