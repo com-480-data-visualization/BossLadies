@@ -31,12 +31,13 @@ The target audience includes students, young adults, and anyone interested in be
 ### Exploratory Data Analysis
 Our exploratory data analysis is available on our Git repository, under milestone_1/food_results.ipynb. 
 
-Our dataset originally consists of five separate files, each containing identical nutritional features but different food items. These datasets were merged into a single dataset for subsequent analysis.
+Our dataset originally consists of five separate files, each containing identical nutritional features but different food items. These datasets were merged into a single dataset for subsequent analysis, resulting in a total of 2'395 food items. 
 The dataset includes a wide range of variables describing both macro- and micronutrients, such as caloric value, fats (and their subtypes), carbohydrates, proteins, vitamins, and minerals.
 
 Some nutritional components are more relevant for this project than others, as they correspond to what people are typically most interested in, namely caloric value, protein, fats, and sugars. Focusing on these variables, we plotted the top 10 foods with the highest values for each, resulting in the four graphs shown below.
 
 
+![Alt text](../../data_viz_mil_1/fat_food.png)
 
 
 ### Related work
