@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TDEE Calculator — Build Your Meal</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .calc-wrapper {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    .calc-wrapper h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3rem);
+      letter-spacing: -0.03em;
+      margin-bottom: 0.4rem;
+    }
+
+    .calc-wrapper .subtitle {
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.4rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.4rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      color: var(--text);
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .btn-calc {
+      width: 100%;
+      padding: 0.9rem;
+      margin-top: 0.5rem;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-calc:hover { opacity: 0.8; }
+
+    .result {
+      display: none;
+      margin-top: 2.5rem;
+      padding: 2rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+    }
+
+    .result.visible { display: block; }
+
+    .result h2 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .result-card {
+      padding: 1.2rem;
+      border-radius: var(--radius);
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .result-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .result-card .value {
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+
+    .result-card.highlight {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+      grid-column: 1 / -1;
+    }
+
+    .result-card.highlight .label { color: #aaa; }
+    .result-card.highlight .value { font-size: 2rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav>
+        <a href="index.html" class="logo">Build Your Meal</a>
+        <ul>
+          <li><a href="index.html" class="active">What's On My Plate</a></li>
+          <li><a href="tdee.html">TDEE Calculator</a></li>
+          <li><a href="fooddb.html">Nutrition Database</a></li>
+          <li><a href="#">Explore Food Information</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="calc-wrapper">
+      <h1>TDEE Calculator</h1>
+      <p class="subtitle">Find out how many calories you burn per day.</p>
+
+      <div class="form-group">
+        <label>Sex</label>
+        <select id="sex">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="age" placeholder="25" min="10" max="100" />
+        </div>
+        <div class="form-group">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" placeholder="70" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label>Height (cm)</label>
+          <input type="number" id="height" placeholder="175" />
+        </div>
+        <div class="form-group">
+          <label>Activity Level</label>
+          <select id="activity">
+            <option value="1.2">Sedentary (desk job)</option>
+            <option value="1.375">Light (1–3x/week)</option>
+            <option value="1.55" selected>Moderate (3–5x/week)</option>
+            <option value="1.725">Active (6–7x/week)</option>
+            <option value="1.9">Very active (athlete)</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-calc" onclick="calculate()">Calculate</button>
+
+      <div class="result" id="result">
+        <h2>Your results</h2>
+        <div class="result-grid">
+          <div class="result-card highlight">
+            <div class="label">TDEE — Total Daily Energy Expenditure</div>
+            <div class="value" id="tdee">—</div>
+          </div>
+          <div class="result-card">
+            <div class="label">BMR (base)</div>
+            <div class="value" id="bmr">—</div>
+          </div>
+          <div class="result-card">
+            <div class="label">Weight loss (−500 kcal)</div>
+            <div class="value" id="loss">—</div>
+          </div>
+          <div class="result-card">
+            <div class="label">Weight gain (+500 kcal)</div>
+            <div class="value" id="gain">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Build Your Meal</p>
+  </footer>
+
+  <script>
+    function calculate() {
+      const sex      = document.getElementById('sex').value;
+      const age      = parseFloat(document.getElementById('age').value);
+      const weight   = parseFloat(document.getElementById('weight').value);
+      const height   = parseFloat(document.getElementById('height').value);
+      const activity = parseFloat(document.getElementById('activity').value);
+
+      if (!age || !weight || !height) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      // Mifflin-St Jeor formula
+      let bmr;
+      if (sex === 'male') {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+      } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+      }
+
+      const tdee = Math.round(bmr * activity);
+
+      document.getElementById('bmr').textContent  = Math.round(bmr) + ' kcal';
+      document.getElementById('tdee').textContent = tdee + ' kcal / day';
+      document.getElementById('loss').textContent = (tdee - 500) + ' kcal';
+      document.getElementById('gain').textContent = (tdee + 500) + ' kcal';
+
+      document.getElementById('result').classList.add('visible');
+    }
+  </script>
+
+</body>
+</html>
