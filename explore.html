@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Explore Food — Build Your Meal</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="js/components.js" defer></script>
   <style>
     .explore-wrapper {
       max-width: 900px;
@@ -27,7 +28,6 @@
       margin-bottom: 2rem;
     }
 
-    /* Label sits directly on the green page background */
     .selector-card {
       display: flex;
       flex-direction: column;
@@ -43,14 +43,13 @@
       color: #346739;
     }
 
-    /* The dropdown itself is yellow */
     .selector-card select {
       width: 100%;
       padding: 0.55rem 2rem 0.55rem 0.75rem;
       border: none;
       border-radius: 8px;
       font-size: 0.95rem;
-      background-color: #f5f0d8;
+      background-color: #ffffff;
       color: var(--text);
       cursor: pointer;
       appearance: none;
@@ -65,9 +64,8 @@
       box-shadow: 0 0 0 3px rgba(42,92,255,0.15);
     }
 
-    /* Both chart cards are now yellow */
     .chart-section {
-      background: #f5f0d8;
+      background: #ffffff;
       border: none;
       border-radius: 12px;
       padding: 2rem;
@@ -121,7 +119,6 @@
       flex-shrink: 0;
     }
 
-    /* ── Rank-by row ── */
     .rank-by-row {
       display: inline-flex;
       align-items: center;
@@ -143,7 +140,7 @@
       border: 1px solid #c8bb8a;
       border-radius: 8px;
       font-size: 0.9rem;
-      background-color: #f5f0d8;
+      background-color: #ffffff;
       color: var(--text);
       cursor: pointer;
       appearance: none;
@@ -152,7 +149,6 @@
       background-position: right 0.6rem center;
     }
 
-    /* ── Parallel coordinates ── */
     #parallel-svg {
       width: 100%;
       overflow: visible;
@@ -173,7 +169,7 @@
     }
     .pc-line {
       fill: none;
-      stroke: #16a34a;
+      stroke: #e91e8c;
       stroke-width: 1.5;
       stroke-opacity: 0.35;
       transition: stroke-opacity 0.15s;
@@ -193,24 +189,11 @@
 </head>
 <body>
 
-  <header>
-    <nav>
-      <a href="index.html" class="logo">Build Your Meal</a>
-      <ul>
-        <li><a href="index.html">What's On My Plate</a></li>
-        <li><a href="tdee.html">TDEE Calculator</a></li>
-        <li><a href="fooddb.html">Nutrition Database</a></li>
-        <li><a href="explore.html" class="active">Explore Food Information</a></li>
-      </ul>
-    </nav>
-  </header>
-
   <main>
     <div class="explore-wrapper">
       <h1>Explore Food Information</h1>
       <p class="subtitle">Enter two foods to compare them side by side</p>
 
-      <!-- Food selectors: labels on green, dropdowns in yellow -->
       <div class="compare-selectors">
         <div class="selector-card">
           <label for="food-a">Food A</label>
@@ -226,7 +209,6 @@
         </div>
       </div>
 
-      <!-- Radar chart — yellow background -->
       <div class="chart-section">
         <h2>Macronutrient composition</h2>
         <p class="chart-desc">Proteins, carbohydrates, fats, sugars and dietary fibre, per 100g.</p>
@@ -246,7 +228,6 @@
         </div>
       </div>
 
-      <!-- Parallel coordinates — yellow background -->
       <div class="chart-section">
         <h2>Parallel coordinates, top 50 foods</h2>
         <p class="chart-desc">Each line is one food. Axes show macronutrients per 100g. Hover a line to identify the food.</p>
@@ -271,16 +252,10 @@
     </div>
   </main>
 
-  <footer>
-    <p>&copy; 2026 Build Your Meal</p>
-  </footer>
-
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script>
-    // ── Data filtering ────────────────────────────────────────────────────────
-
     const COLS_G = [
       'Fat', 'Saturated Fats', 'Monounsaturated Fats', 'Polyunsaturated Fats',
       'Carbohydrates', 'Sugars', 'Protein', 'Dietary Fiber', 'Water'
@@ -313,20 +288,16 @@
     }
 
     function filterOutliers(data) {
-      console.log(`[filter] raw rows: ${data.length}`);
-
       let filtered = data.filter(row => {
-        const gOk     = COLS_G.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100));
-        const mgOk    = COLS_MG.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100000));
+        const gOk      = COLS_G.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100));
+        const mgOk     = COLS_MG.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100000));
         const macroSum = MAIN_MACROS.reduce((s, col) => s + (row[col] || 0), 0);
-        const sumOk   = macroSum <= 101;
+        const sumOk    = macroSum <= 101;
         const sugarsOk = (row['Sugars'] || 0) <= (row['Carbohydrates'] || 0) + 1;
         const satFatOk = (row['Saturated Fats'] || 0) <= (row['Fat'] || 0) + 1;
-        const kcalOk  = !(row['Caloric Value']) || (row['Caloric Value'] >= 0 && row['Caloric Value'] <= 900);
+        const kcalOk   = !(row['Caloric Value']) || (row['Caloric Value'] >= 0 && row['Caloric Value'] <= 900);
         return gOk && mgOk && sumOk && sugarsOk && satFatOk && kcalOk;
       });
-
-      console.log(`[filter] after hard constraints: ${filtered.length}`);
 
       const gLimits = {};
       COLS_G.forEach(col => { gLimits[col] = getUpperLimit(filtered, col, 0.99); });
@@ -345,14 +316,8 @@
         !(row['Caloric Value']) || row['Caloric Value'] <= kcalLimit
       );
 
-      console.log(`[filter] final rows: ${filtered.length}`);
-      console.log(`[filter] max Sugars:`, Math.max(...filtered.map(r => r['Sugars'] || 0)));
-      console.log(`[filter] max kcal:`,   Math.max(...filtered.map(r => r['Caloric Value'] || 0)));
-
       return filtered;
     }
-
-    // ── Data loading ──────────────────────────────────────────────────────────
 
     const CSV_FILES = [
       './data/FOOD-DATA-GROUP1.csv',
@@ -379,12 +344,8 @@
       return filterOutliers(groups.flat());
     }
 
-    // ── App state ─────────────────────────────────────────────────────────────
-
     let allFoodData = [];
     let radarChart  = null;
-
-    // ── Dropdowns ─────────────────────────────────────────────────────────────
 
     function populateDropdowns(data) {
       const names   = [...new Set(data.map(d => d.food).filter(Boolean))].sort();
@@ -400,8 +361,6 @@
       selectB.selectedIndex = Math.min(1, names.length - 1);
     }
 
-    // ── Radar chart ───────────────────────────────────────────────────────────
-
     function renderRadarChart(food1, food2) {
       const nutrients = ['Protein', 'Carbohydrates', 'Fat', 'Sugars', 'Dietary Fiber'];
       const vals1 = nutrients.map(n => Math.max(0, food1[n] || 0));
@@ -409,8 +368,8 @@
 
       const canvas = document.getElementById('radarChart');
       canvas.style.display = 'block';
-      document.getElementById('loading-msg').style.display    = 'none';
-      document.getElementById('chart-legend').style.display   = 'flex';
+      document.getElementById('loading-msg').style.display  = 'none';
+      document.getElementById('chart-legend').style.display = 'flex';
       document.getElementById('legend-a').textContent = food1.food;
       document.getElementById('legend-b').textContent = food2.food;
 
@@ -476,8 +435,6 @@
       const foodB = allFoodData.find(d => d.food === nameB);
       if (foodA && foodB) renderRadarChart(foodA, foodB);
     }
-
-    // ── Parallel coordinates ──────────────────────────────────────────────────
 
     function renderParallelChart(data, sortCol) {
       const NUTRIENTS = ['Protein', 'Carbohydrates', 'Fat', 'Sugars', 'Dietary Fiber', 'Caloric Value'];
@@ -552,8 +509,6 @@
           .text(n);
       });
     }
-
-    // ── Init ──────────────────────────────────────────────────────────────────
 
     async function init() {
       allFoodData = await loadData();

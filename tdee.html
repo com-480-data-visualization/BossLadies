@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,20 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TDEE Calculator — Build Your Meal</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="js/components.js" defer></script>
 </head>
 <body>
-
-  <header>
-    <nav>
-      <a href="index.html" class="logo">Build Your Meal</a>
-      <ul>
-        <li><a href="index.html">What's On My Plate</a></li>
-        <li><a href="tdee.html" class="active">TDEE Calculator</a></li>
-        <li><a href="fooddb.html">Nutrition Database</a></li>
-        <li><a href="explore.html">Explore Food Information</a></li>
-      </ul>
-    </nav>
-  </header>
 
   <main>
     <div class="calc-wrapper">
@@ -88,13 +76,9 @@
     </div>
   </main>
 
-  <footer>
-    <p>&copy; 2026 Build Your Meal</p>
-  </footer>
-
   <script>
     function calculate() {
-      const gender      = document.getElementById('gender').value;
+      const gender   = document.getElementById('gender').value;
       const age      = parseFloat(document.getElementById('age').value);
       const weight   = parseFloat(document.getElementById('weight').value);
       const height   = parseFloat(document.getElementById('height').value);
