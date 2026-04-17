@@ -6,7 +6,7 @@
 | Margaux Anne Elbaum | 415343 |
 | Yasmine Hidri	| 346771 |
 
-[Milestone 1](milestone_1/README.md) • [Milestone 2](#milestone-2) • [Milestone 3](#milestone-3)
+[Milestone 1](milestone_1/README.md) • [Milestone 2](milestone_1/Milestone_2.pdf) • [Milestone 3](#milestone-3)
 
 ## Milestone 1 (20th March, 5pm)
 
