@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore Food — Build Your Meal</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .explore-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .explore-wrapper h1 {
+      margin-bottom: 0.25rem;
+    }
+
+    .explore-wrapper .subtitle {
+      margin-bottom: 2rem;
+    }
+
+    .compare-selectors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Label sits directly on the green page background */
+    .selector-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .selector-card label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #346739;
+    }
+
+    /* The dropdown itself is yellow */
+    .selector-card select {
+      width: 100%;
+      padding: 0.55rem 2rem 0.55rem 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background-color: #f5f0d8;
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .selector-card select:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(42,92,255,0.15);
+    }
+
+    /* Both chart cards are now yellow */
+    .chart-section {
+      background: #f5f0d8;
+      border: none;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-section h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .chart-section .chart-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .radar-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .loading-msg {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+      padding: 3rem 0;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Rank-by row ── */
+    .rank-by-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .rank-by-row label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      color: #346739;
+    }
+
+    .rank-by-row select {
+      padding: 0.45rem 2rem 0.45rem 0.75rem;
+      border: 1px solid #c8bb8a;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background-color: #f5f0d8;
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+    }
+
+    /* ── Parallel coordinates ── */
+    #parallel-svg {
+      width: 100%;
+      overflow: visible;
+    }
+    .pc-axis path, .pc-axis line {
+      stroke: #c8bb8a;
+    }
+    .pc-axis text {
+      fill: #374151;
+      font-size: 12px;
+      font-family: var(--font-sans);
+    }
+    .pc-axis .axis-label {
+      fill: #111827;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+    }
+    .pc-line {
+      fill: none;
+      stroke: #16a34a;
+      stroke-width: 1.5;
+      stroke-opacity: 0.35;
+      transition: stroke-opacity 0.15s;
+    }
+    .pc-line:hover {
+      stroke-opacity: 1;
+      stroke-width: 2.5;
+      stroke: #2a5cff;
+    }
+
+    @media (max-width: 600px) {
+      .compare-selectors {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav>
+      <a href="index.html" class="logo">Build Your Meal</a>
+      <ul>
+        <li><a href="index.html">What's On My Plate</a></li>
+        <li><a href="tdee.html">TDEE Calculator</a></li>
+        <li><a href="fooddb.html">Nutrition Database</a></li>
+        <li><a href="explore.html" class="active">Explore Food Information</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="explore-wrapper">
+      <h1>Explore Food Information</h1>
+      <p class="subtitle">Enter two foods to compare them side by side</p>
+
+      <!-- Food selectors: labels on green, dropdowns in yellow -->
+      <div class="compare-selectors">
+        <div class="selector-card">
+          <label for="food-a">Food A</label>
+          <select id="food-a">
+            <option value="">Loading foods…</option>
+          </select>
+        </div>
+        <div class="selector-card">
+          <label for="food-b">Food B</label>
+          <select id="food-b">
+            <option value="">Loading foods…</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Radar chart — yellow background -->
+      <div class="chart-section">
+        <h2>Macronutrient composition</h2>
+        <p class="chart-desc">Proteins, carbohydrates, fats, sugars and dietary fibre, per 100g.</p>
+        <div class="radar-container">
+          <div class="loading-msg" id="loading-msg">Loading data…</div>
+          <canvas id="radarChart" style="display:none;"></canvas>
+        </div>
+        <div class="legend" id="chart-legend" style="display:none;">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#16a34a;"></div>
+            <span id="legend-a">Food A</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#2563eb;"></div>
+            <span id="legend-b">Food B</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parallel coordinates — yellow background -->
+      <div class="chart-section">
+        <h2>Parallel coordinates, top 50 foods</h2>
+        <p class="chart-desc">Each line is one food. Axes show macronutrients per 100g. Hover a line to identify the food.</p>
+
+        <div class="rank-by-row">
+          <label for="parallel-sort">Rank by</label>
+          <select id="parallel-sort">
+            <option value="Caloric Value">Caloric Value</option>
+            <option value="Protein">Protein</option>
+            <option value="Carbohydrates">Carbohydrates</option>
+            <option value="Fat">Fat</option>
+            <option value="Sugars">Sugars</option>
+            <option value="Dietary Fiber">Dietary Fiber</option>
+          </select>
+        </div>
+
+        <div id="parallel-loading" class="loading-msg">Loading data…</div>
+        <div id="parallel-tooltip" style="position:fixed;pointer-events:none;display:none;background:#1a1a1a;color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.82rem;z-index:999;white-space:nowrap;"></div>
+        <svg id="parallel-svg" style="display:none;"></svg>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Build Your Meal</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script>
+    // ── Data filtering ────────────────────────────────────────────────────────
+
+    const COLS_G = [
+      'Fat', 'Saturated Fats', 'Monounsaturated Fats', 'Polyunsaturated Fats',
+      'Carbohydrates', 'Sugars', 'Protein', 'Dietary Fiber', 'Water'
+    ];
+    const COLS_MG = [
+      'Cholesterol', 'Vitamin A', 'Vitamin B1', 'Vitamin B11', 'Vitamin B12',
+      'Vitamin B2', 'Vitamin B3', 'Vitamin B5', 'Vitamin B6', 'Vitamin C',
+      'Vitamin D', 'Vitamin E', 'Vitamin K', 'Calcium', 'Copper', 'Iron',
+      'Magnesium', 'Manganese', 'Phosphorus', 'Potassium', 'Selenium', 'Zinc'
+    ];
+    const MAIN_MACROS = ['Fat', 'Carbohydrates', 'Protein', 'Water'];
+
+    function quantile(sortedValues, q) {
+      const pos = (sortedValues.length - 1) * q;
+      const base = Math.floor(pos);
+      const rest = pos - base;
+      if (base + 1 < sortedValues.length) {
+        return sortedValues[base] + rest * (sortedValues[base + 1] - sortedValues[base]);
+      }
+      return sortedValues[base];
+    }
+
+    function getUpperLimit(data, col, q = 0.99) {
+      const values = data
+        .map(row => row[col])
+        .filter(v => v != null && !isNaN(v) && v >= 0)
+        .sort((a, b) => a - b);
+      if (values.length === 0) return Infinity;
+      return quantile(values, q);
+    }
+
+    function filterOutliers(data) {
+      console.log(`[filter] raw rows: ${data.length}`);
+
+      let filtered = data.filter(row => {
+        const gOk     = COLS_G.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100));
+        const mgOk    = COLS_MG.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100000));
+        const macroSum = MAIN_MACROS.reduce((s, col) => s + (row[col] || 0), 0);
+        const sumOk   = macroSum <= 101;
+        const sugarsOk = (row['Sugars'] || 0) <= (row['Carbohydrates'] || 0) + 1;
+        const satFatOk = (row['Saturated Fats'] || 0) <= (row['Fat'] || 0) + 1;
+        const kcalOk  = !(row['Caloric Value']) || (row['Caloric Value'] >= 0 && row['Caloric Value'] <= 900);
+        return gOk && mgOk && sumOk && sugarsOk && satFatOk && kcalOk;
+      });
+
+      console.log(`[filter] after hard constraints: ${filtered.length}`);
+
+      const gLimits = {};
+      COLS_G.forEach(col => { gLimits[col] = getUpperLimit(filtered, col, 0.99); });
+      filtered = filtered.filter(row =>
+        COLS_G.every(col => !(col in row) || row[col] <= gLimits[col])
+      );
+
+      const mgLimits = {};
+      COLS_MG.forEach(col => { mgLimits[col] = getUpperLimit(filtered, col, 0.99); });
+      filtered = filtered.filter(row =>
+        COLS_MG.every(col => !(col in row) || row[col] <= mgLimits[col])
+      );
+
+      const kcalLimit = getUpperLimit(filtered, 'Caloric Value', 0.99);
+      filtered = filtered.filter(row =>
+        !(row['Caloric Value']) || row['Caloric Value'] <= kcalLimit
+      );
+
+      console.log(`[filter] final rows: ${filtered.length}`);
+      console.log(`[filter] max Sugars:`, Math.max(...filtered.map(r => r['Sugars'] || 0)));
+      console.log(`[filter] max kcal:`,   Math.max(...filtered.map(r => r['Caloric Value'] || 0)));
+
+      return filtered;
+    }
+
+    // ── Data loading ──────────────────────────────────────────────────────────
+
+    const CSV_FILES = [
+      './data/FOOD-DATA-GROUP1.csv',
+      './data/FOOD-DATA-GROUP2.csv',
+      './data/FOOD-DATA-GROUP3.csv',
+      './data/FOOD-DATA-GROUP4.csv',
+      './data/FOOD-DATA-GROUP5.csv',
+    ];
+
+    async function loadData() {
+      const promises = CSV_FILES.map(file =>
+        new Promise((resolve, reject) => {
+          Papa.parse(file, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            complete: results => resolve(results.data),
+            error: err => reject(err),
+          });
+        })
+      );
+      const groups = await Promise.all(promises);
+      return filterOutliers(groups.flat());
+    }
+
+    // ── App state ─────────────────────────────────────────────────────────────
+
+    let allFoodData = [];
+    let radarChart  = null;
+
+    // ── Dropdowns ─────────────────────────────────────────────────────────────
+
+    function populateDropdowns(data) {
+      const names   = [...new Set(data.map(d => d.food).filter(Boolean))].sort();
+      const selectA = document.getElementById('food-a');
+      const selectB = document.getElementById('food-b');
+      selectA.innerHTML = '';
+      selectB.innerHTML = '';
+      names.forEach(name => {
+        selectA.appendChild(new Option(name, name));
+        selectB.appendChild(new Option(name, name));
+      });
+      selectA.selectedIndex = 0;
+      selectB.selectedIndex = Math.min(1, names.length - 1);
+    }
+
+    // ── Radar chart ───────────────────────────────────────────────────────────
+
+    function renderRadarChart(food1, food2) {
+      const nutrients = ['Protein', 'Carbohydrates', 'Fat', 'Sugars', 'Dietary Fiber'];
+      const vals1 = nutrients.map(n => Math.max(0, food1[n] || 0));
+      const vals2 = nutrients.map(n => Math.max(0, food2[n] || 0));
+
+      const canvas = document.getElementById('radarChart');
+      canvas.style.display = 'block';
+      document.getElementById('loading-msg').style.display    = 'none';
+      document.getElementById('chart-legend').style.display   = 'flex';
+      document.getElementById('legend-a').textContent = food1.food;
+      document.getElementById('legend-b').textContent = food2.food;
+
+      if (radarChart) radarChart.destroy();
+
+      radarChart = new Chart(canvas, {
+        type: 'radar',
+        data: {
+          labels: nutrients,
+          datasets: [
+            {
+              label: food1.food,
+              data: vals1,
+              backgroundColor: 'rgba(22,163,74,0.2)',
+              borderColor: 'rgba(22,163,74,0.9)',
+              pointBackgroundColor: 'rgba(22,163,74,0.9)',
+              pointRadius: 4,
+              borderWidth: 2,
+            },
+            {
+              label: food2.food,
+              data: vals2,
+              backgroundColor: 'rgba(37,99,235,0.15)',
+              borderColor: 'rgba(37,99,235,0.9)',
+              pointBackgroundColor: 'rgba(37,99,235,0.9)',
+              pointRadius: 4,
+              borderWidth: 2,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.r.toFixed(1)} g`
+              }
+            }
+          },
+          scales: {
+            r: {
+              beginAtZero: true,
+              ticks: {
+                font: { size: 11 },
+                backdropColor: 'transparent',
+                color: '#9ca3af',
+              },
+              grid:        { color: 'rgba(0,0,0,0.1)' },
+              pointLabels: { font: { size: 13, weight: '500' }, color: '#374151' },
+              angleLines:  { color: 'rgba(0,0,0,0.1)' },
+            }
+          }
+        }
+      });
+    }
+
+    function onSelectionChange() {
+      const nameA = document.getElementById('food-a').value;
+      const nameB = document.getElementById('food-b').value;
+      if (!nameA || !nameB) return;
+      const foodA = allFoodData.find(d => d.food === nameA);
+      const foodB = allFoodData.find(d => d.food === nameB);
+      if (foodA && foodB) renderRadarChart(foodA, foodB);
+    }
+
+    // ── Parallel coordinates ──────────────────────────────────────────────────
+
+    function renderParallelChart(data, sortCol) {
+      const NUTRIENTS = ['Protein', 'Carbohydrates', 'Fat', 'Sugars', 'Dietary Fiber', 'Caloric Value'];
+
+      let rankBy = sortCol;
+      if (!(rankBy in (data[0] || {}))) rankBy = 'Protein';
+
+      const top50 = [...data]
+        .filter(d => (d[rankBy] || 0) > 0)
+        .sort((a, b) => (b[rankBy] || 0) - (a[rankBy] || 0))
+        .slice(0, 50);
+
+      const svg = document.getElementById('parallel-svg');
+      svg.style.display = 'block';
+      document.getElementById('parallel-loading').style.display = 'none';
+
+      const margin = { top: 48, right: 40, bottom: 20, left: 40 };
+      const totalW = svg.parentElement.clientWidth || 800;
+      const W = totalW - margin.left - margin.right;
+      const H = 340;
+
+      svg.setAttribute('viewBox', `0 0 ${totalW} ${H + margin.top + margin.bottom}`);
+      svg.setAttribute('height', H + margin.top + margin.bottom);
+
+      const root = d3.select(svg);
+      root.selectAll('*').remove();
+      const g = root.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const yScales = {};
+      NUTRIENTS.forEach(n => {
+        const vals = top50.map(d => +d[n] || 0);
+        yScales[n] = d3.scaleLinear()
+          .domain([0, d3.max(vals) * 1.05])
+          .range([H, 0]);
+      });
+
+      const xScale = d3.scalePoint()
+        .domain(NUTRIENTS)
+        .range([0, W])
+        .padding(0.1);
+
+      function path(d) {
+        return d3.line()(NUTRIENTS.map(n => [xScale(n), yScales[n](+d[n] || 0)]));
+      }
+
+      const tooltip = document.getElementById('parallel-tooltip');
+
+      g.selectAll('.pc-line')
+        .data(top50)
+        .join('path')
+        .attr('class', 'pc-line')
+        .attr('d', path)
+        .on('mousemove', (event, d) => {
+          tooltip.style.display = 'block';
+          tooltip.style.left = (event.clientX + 14) + 'px';
+          tooltip.style.top  = (event.clientY - 28) + 'px';
+          tooltip.textContent = d.food || '—';
+        })
+        .on('mouseleave', () => { tooltip.style.display = 'none'; });
+
+      NUTRIENTS.forEach(n => {
+        const axisG = g.append('g')
+          .attr('class', 'pc-axis')
+          .attr('transform', `translate(${xScale(n)},0)`);
+
+        axisG.call(d3.axisLeft(yScales[n]).ticks(5).tickSize(4));
+
+        axisG.append('text')
+          .attr('class', 'axis-label')
+          .attr('y', -14)
+          .attr('text-anchor', 'middle')
+          .text(n);
+      });
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
+    async function init() {
+      allFoodData = await loadData();
+      populateDropdowns(allFoodData);
+
+      document.getElementById('food-a').addEventListener('change', onSelectionChange);
+      document.getElementById('food-b').addEventListener('change', onSelectionChange);
+
+      const sortSelect = document.getElementById('parallel-sort');
+      sortSelect.addEventListener('change', () => {
+        renderParallelChart(allFoodData, sortSelect.value);
+      });
+
+      onSelectionChange();
+      renderParallelChart(allFoodData, sortSelect.value);
+    }
+
+    init();
+  </script>
+
+</body>
+</html>
