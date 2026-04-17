@@ -1,4 +1,9 @@
 // components.js
+
+/**
+ * highlights the nav link matching the current page by toggling the active class.
+ * falls back to 'index.html' if no filename is found in the path
+ */
 function setActiveNav() {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('nav ul a').forEach(link => {
@@ -8,7 +13,10 @@ function setActiveNav() {
       }
     });
   }
-  
+  /**
+ * dynamically injects the shared header and footer into the page, then marks the current page as active in the nav.
+ * called on DOMContentLoaded so the <body> is ready before manipulation
+ */
   function injectLayout() {
     const header = document.createElement('header');
     header.innerHTML = `
@@ -23,7 +31,7 @@ function setActiveNav() {
       </nav>
     `;
     document.body.prepend(header);
-  
+    // build and append the footer
     const footer = document.createElement('footer');
     footer.innerHTML = `<p>&copy; 2026 Build Your Meal</p>`;
     document.body.append(footer);
@@ -31,5 +39,5 @@ function setActiveNav() {
     setActiveNav();
   }
   
-  // ← remplace injectLayout() par ça :
+  // wait for the DOM to be fully parsed before injecting layout, so document.body is guaranteed to exist
   document.addEventListener('DOMContentLoaded', injectLayout);

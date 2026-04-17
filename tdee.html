@@ -5,108 +5,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TDEE Calculator — Build Your Meal</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="js/components.js" defer></script>
+  <script src="js/components.js" defer></script> <!-- injects shared header/footer -->
 </head>
+
 <body>
+<main>
+  <div class="calc-wrapper">
+    <h1>TDEE Calculator</h1>
+    <p class="subtitle">Find out how many calories you burn per day</p>
 
-  <main>
-    <div class="calc-wrapper">
-      <h1>TDEE Calculator</h1>
-      <p class="subtitle">Find out how many calories you burn per day.</p>
+    <!-- ── inputs ──────────────────────────────────────────────────────────── -->
 
+    <div class="form-group">
+      <label>Gender</label>
+      <select id="gender">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+    </div>
+
+    <div class="row">
       <div class="form-group">
-        <label>Gender</label>
-        <select id="gender">
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
+        <label>Age</label>
+        <input type="number" id="age" placeholder="25" min="10" max="100" />
       </div>
-
-      <div class="row">
-        <div class="form-group">
-          <label>Age</label>
-          <input type="number" id="age" placeholder="25" min="10" max="100" />
-        </div>
-        <div class="form-group">
-          <label>Weight (kg)</label>
-          <input type="number" id="weight" placeholder="70" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="form-group">
-          <label>Height (cm)</label>
-          <input type="number" id="height" placeholder="175" />
-        </div>
-        <div class="form-group">
-          <label>Activity Level</label>
-          <select id="activity">
-            <option value="1.2">Sedentary (desk job)</option>
-            <option value="1.375">Light (1–3x/week)</option>
-            <option value="1.55" selected>Moderate (3–5x/week)</option>
-            <option value="1.725">Active (6–7x/week)</option>
-            <option value="1.9">Very active (athlete)</option>
-          </select>
-        </div>
-      </div>
-
-      <button class="btn-calc" onclick="calculate()">Calculate</button>
-
-      <div class="result" id="result">
-        <h2>Your results</h2>
-        <div class="result-grid">
-          <div class="result-card highlight">
-            <div class="label">TDEE — Total Daily Energy Expenditure</div>
-            <div class="value" id="tdee">—</div>
-          </div>
-          <div class="result-card">
-            <div class="label">BMR (base)</div>
-            <div class="value" id="bmr">—</div>
-          </div>
-          <div class="result-card">
-            <div class="label">Weight loss (−500 kcal)</div>
-            <div class="value" id="loss">—</div>
-          </div>
-          <div class="result-card">
-            <div class="label">Weight gain (+500 kcal)</div>
-            <div class="value" id="gain">—</div>
-          </div>
-        </div>
+      <div class="form-group">
+        <label>Weight (kg)</label>
+        <input type="number" id="weight" placeholder="70" />
       </div>
     </div>
-  </main>
 
-  <script>
-    function calculate() {
-      const gender   = document.getElementById('gender').value;
-      const age      = parseFloat(document.getElementById('age').value);
-      const weight   = parseFloat(document.getElementById('weight').value);
-      const height   = parseFloat(document.getElementById('height').value);
-      const activity = parseFloat(document.getElementById('activity').value);
+    <div class="row">
+      <div class="form-group">
+        <label>Height (cm)</label>
+        <input type="number" id="height" placeholder="175" />
+      </div>
+      <div class="form-group">
+        <label>Activity Level</label>
+        <select id="activity">
+          <option value="1.2">Sedentary (desk job)</option>
+          <option value="1.375">Light (1–3x/week)</option>
+          <option value="1.55" selected>Moderate (3–5x/week)</option>
+          <option value="1.725">Active (6–7x/week)</option>
+          <option value="1.9">Very active (athlete)</option>
+        </select>
+      </div>
+    </div>
 
-      if (!age || !weight || !height) {
-        alert('Please fill in all fields.');
-        return;
-      }
+    <button class="btn-calc" onclick="calculate()">Calculate</button>
 
-      // Mifflin-St Jeor formula
-      let bmr;
-      if (gender === 'male') {
-        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-      } else {
-        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
-      }
+    <div class="result" id="result">
+      <h2>Your results</h2>
+      <div class="result-grid">
 
-      const tdee = Math.round(bmr * activity);
+        <div class="result-card highlight">
+          <div class="label">TDEE — Total Daily Energy Expenditure</div>
+          <div class="value" id="tdee">—</div>
+        </div>
 
-      document.getElementById('bmr').textContent  = Math.round(bmr) + ' kcal';
-      document.getElementById('tdee').textContent = tdee + ' kcal / day';
-      document.getElementById('loss').textContent = (tdee - 500) + ' kcal';
-      document.getElementById('gain').textContent = (tdee + 500) + ' kcal';
+        <div class="result-card">
+          <div class="label">BMR (base)</div>
+          <div class="value" id="bmr">—</div>
+        </div>
+        <div class="result-card">
+          <div class="label">Weight loss (−500 kcal)</div> 
+          <div class="value" id="loss">—</div>
+        </div>
+        <div class="result-card">
+          <div class="label">Weight gain (+500 kcal)</div> 
+          <div class="value" id="gain">—</div>
+        </div>
 
-      document.getElementById('result').classList.add('visible');
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  /**
+   * reads form inputs, computes BMR via the Mifflin-St Jeor equation,
+   * derives TDEE by applying the activity multiplier, and displays the results.
+   *
+   * Mifflin-St Jeor (1990):
+   *   Male:   BMR = 10W + 6.25H − 5A + 5
+   *   Female: BMR = 10W + 6.25H − 5A − 161
+   * where W = weight (kg), H = height (cm), A = age (years)
+   *
+   * TDEE = BMR × PAL (Physical Activity Level multiplier)
+   */
+  function calculate() {
+    const gender   = document.getElementById('gender').value;
+    const age      = parseFloat(document.getElementById('age').value);
+    const weight   = parseFloat(document.getElementById('weight').value);
+    const height   = parseFloat(document.getElementById('height').value);
+    const activity = parseFloat(document.getElementById('activity').value); // PAL multiplier
+
+    // guard: all numeric fields must be filled
+    if (!age || !weight || !height) {
+      alert('Please fill in all fields.');
+      return;
     }
-  </script>
 
+    // BMR
+    let bmr;
+    if (gender === 'male') {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+
+    // TDEE = BMR × activity multiplier
+    const tdee = Math.round(bmr * activity);
+
+    // render results
+    document.getElementById('bmr').textContent  = Math.round(bmr) + ' kcal';
+    document.getElementById('tdee').textContent = tdee + ' kcal / day';
+    document.getElementById('loss').textContent = (tdee - 500) + ' kcal'; // ~0.5 kg/week deficit
+    document.getElementById('gain').textContent = (tdee + 500) + ' kcal'; // ~0.5 kg/week surplus
+
+    // reveal the result section
+    document.getElementById('result').classList.add('visible');
+  }
+</script>
 </body>
 </html>

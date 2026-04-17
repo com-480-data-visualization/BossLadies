@@ -1,9 +1,19 @@
 // js/charts.js
+
+/**
+ * entry point: fetches nutrition data and renders the comparison chart.
+ */
 async function init() {
     const data = await loadData();
     renderPolarChart(data, "Apple", "Banana"); // two foods to compare
   }
-  
+  /**
+ * renders a polar area chart comparing the nutritional values of two foods.
+ * @param {Array<Object>} data     - Full nutrition dataset (one object per food)
+ * @param {string}        food1Name - Name of the first food (must match dataset's `food` field)
+ * @param {string}        food2Name - Name of the second food
+ */
+
   function renderPolarChart(data, food1Name, food2Name) {
     const food1 = data.find(d => d.food === food1Name);
     const food2 = data.find(d => d.food === food2Name);

@@ -3,19 +3,376 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Build Your Meal</title>
+  <title>Nutrition Database — Build Your Meal</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="js/components.js" defer></script>                                                          
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>        
+  <script src="js/loadData.js"></script>                                                                  
+  <style>
+    
+    /* page layout */
+    .db-wrapper { max-width: var(--max-width); margin: 0 auto; padding: 4rem 2rem; }
+    .db-wrapper h1 { font-family: var(--font-sans); font-size: clamp(2rem,5vw,3rem);
+                     letter-spacing: -0.03em; margin-bottom: 0.4rem; }
+    .db-wrapper .subtitle { color: var(--muted); margin-bottom: 2rem; }
+
+    /* search + sort controls */
+    .db-controls    { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .db-search-wrap { position: relative; flex: 1; min-width: 200px; }
+    /* search icon is positioned absolutely inside the input wrapper */
+    .db-search-wrap svg   { position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+                            color: var(--muted); pointer-events: none; opacity: 0.5; }
+    .db-search-wrap input { padding-left: 40px; }
+
+    /* A–Z quick-filter strip */
+    .alpha-nav { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 1.5rem; }
+    .alpha-btn {
+      width: 30px; height: 30px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      border-radius: var(--radius); font-size: 0.8rem; font-weight: 500;
+      font-family: var(--font-sans); color: var(--text); cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .alpha-btn:hover, .alpha-btn.active { background: var(--text); color: var(--bg-card); border-color: var(--text); }
+    .alpha-btn:disabled                 { opacity: 0.25; cursor: default; pointer-events: none; }
+
+    .db-stats { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+    /* alphabetical letter groups */
+    .letter-group  { margin-bottom: 2.5rem; }
+    .letter-anchor { font-family: var(--font-display); font-size: 2rem; color: var(--text);
+                     margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+
+    /* Food cards grid */
+    .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+    .food-card {
+      padding: 1.2rem; border-radius: var(--radius);
+      background: var(--bg-card); border: 1px solid var(--border);
+      cursor: pointer; transition: border-color 0.15s, transform 0.1s;
+    }
+    .food-card:hover { border-color: var(--text); transform: translateY(-2px); }
+
+    .food-name {
+      font-size: 0.85rem; font-weight: 500; color: var(--text);
+      margin-bottom: 0.5rem; line-height: 1.3; min-height: 32px;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden; 
+    }
+    .cal-row { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+               color: var(--muted); margin-bottom: 0.75rem; }
+    .cal-row strong { font-size: 1rem; font-weight: 500; text-transform: none;
+                      letter-spacing: 0; color: var(--text); }
+
+    
+    .macros { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .macro  { border-radius: calc(var(--radius) - 2px); padding: 4px 8px; }
+    .macro .macro-lbl { font-size: 0.65rem; font-weight: 500; text-transform: uppercase;
+                        letter-spacing: 0.05em; opacity: 0.7; }
+    .macro .macro-val { font-size: 0.82rem; font-weight: 500; }
+    /* colour-coded by macro type */
+    .m-protein { background: #edf4fb; color: #1a5276; }
+    .m-carb    { background: #fef9ec; color: #7d6608; }
+    .m-fat     { background: #f5edfb; color: #6c3483; }
+    .m-fiber   { background: #edfaf3; color: #1e8449; }
+
+    .db-loading, .db-empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid var(--border); border-top-color: var(--text);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--bg-card); border-radius: var(--radius);
+      max-width: 520px; width: 100%; max-height: 88vh; overflow-y: auto;
+      padding: 2rem; transform: translateY(10px); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header  { display: flex; justify-content: space-between;
+                     align-items: flex-start; margin-bottom: 1.25rem; }
+    .modal-title   { font-family: var(--font-sans); font-size: 1.3rem; font-weight: 500;
+                     letter-spacing: -0.02em; color: var(--text); flex: 1; line-height: 1.2; }
+    .modal-close   {
+      width: 28px; height: 28px; border: 1px solid var(--border);
+      background: transparent; border-radius: 50%; font-size: 1rem; cursor: pointer;
+      color: var(--muted); display: flex; align-items: center; justify-content: center;
+      margin-left: 12px; flex-shrink: 0; font-family: var(--font-sans); transition: background 0.12s;
+    }
+    .modal-close:hover { background: var(--border); }
+
+    .modal-macros { display: grid; grid-template-columns: repeat(3,1fr);
+                    gap: 0.75rem; margin-bottom: 1.25rem; }
+    .modal-macro  { padding: 1rem; border-radius: var(--radius);
+                    background: var(--bg); border: 1px solid var(--border); text-align: center; }
+    .modal-macro .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;
+                          color: var(--muted); margin-bottom: 0.2rem; }
+    .modal-macro .value { font-size: 1.2rem; font-weight: 500; color: var(--text); }
+    .modal-macro .unit  { font-size: 0.7rem; color: var(--muted); }
+
+    .modal-section-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+                           color: var(--muted); font-weight: 500; margin: 1.25rem 0 0.5rem; }
+
+    .nutrient-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+    .nutrient-row  { display: flex; justify-content: space-between;
+                     padding: 5px 8px; border-radius: calc(var(--radius) - 2px); font-size: 0.8rem; }
+    .nutrient-row:nth-child(odd) { background: var(--bg); }
+    .nutrient-name { color: var(--muted); }
+    .nutrient-val  { font-weight: 500; color: var(--text); }
+
+    @media (max-width: 600px) {
+      .food-grid     { grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); }
+      .modal-macros  { grid-template-columns: repeat(2,1fr); }
+      .nutrient-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
+<main>
+  <div class="db-wrapper">
 
-  <header>
-    <nav>
-      <a href="index.html" class="logo">Build Your Meal</a>
-      <ul>
-        <li><a href="index.html" class="active">What's On My Plate</a></li>
-        <li><a href="tdee.html">TDEE Calculator</a></li>
-        <li><a href="fooddb.html">Nutrition Database</a></li>
-        <li><a href="explore.html">Explore Food Information</a></li>
-      </ul>
-    </nav>
-  </header>
+    <h1>Nutrition Database</h1>
+    <p class="subtitle">Nutritional info for every ingredient, per 100g</p>
+
+    <!-- controls: search input + sort dropdown -->
+    <div class="db-controls">
+      <div class="db-search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search" placeholder="Search foods…" autocomplete="off" />
+      </div>
+      <select id="sort" style="width:auto;">
+        <option value="alpha">A → Z</option>
+        <option value="cal-desc">Most calories</option>
+        <option value="cal-asc">Fewest calories</option>
+        <option value="protein-desc">Most protein</option>
+      </select>
+    </div>
+
+    <div class="alpha-nav" id="alphaNav"></div>
+
+    <div class="db-stats" id="statsBar"></div>
+
+    <div id="content">
+      <div class="db-loading">
+        <div class="spinner"></div>
+        <p>Loading food data…</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  // helpers
+
+  /** Formats a numeric value to `d` decimal places; returns '–' for missing data. */
+  function fmt(v, d = 1) {
+    if (v == null || isNaN(v)) return '–';
+    return Number(v).toFixed(d);
+  }
+
+  /** Returns the food name from a data row, falling back through likely key names. */
+  function getKey(d) { return d.food || d.Food || Object.values(d)[0] || ''; }
+
+
+  // state
+
+  let allData      = [];    // full cleaned dataset, set on init
+  let currentFilter = '';   // live search string
+  let currentSort   = 'alpha';
+  let activeAlpha   = '';   // currently selected A–Z letter ('' = none)
+
+
+  // sorting & filtering 
+
+  function applySort(arr) {
+    const s = [...arr];
+    if      (currentSort === 'alpha')        s.sort((a,b) => getKey(a).localeCompare(getKey(b)));
+    else if (currentSort === 'cal-desc')     s.sort((a,b) => (b['Caloric Value']||0) - (a['Caloric Value']||0));
+    else if (currentSort === 'cal-asc')      s.sort((a,b) => (a['Caloric Value']||0) - (b['Caloric Value']||0));
+    else if (currentSort === 'protein-desc') s.sort((a,b) => (b['Protein']||0) - (a['Protein']||0));
+    return s;
+  }
+
+  function applyFilter(arr) {
+    let r = arr;
+    if (currentFilter) r = r.filter(d => getKey(d).toLowerCase().includes(currentFilter.toLowerCase()));
+    if (activeAlpha)   r = r.filter(d => getKey(d).toUpperCase().startsWith(activeAlpha));
+    return r;
+  }
+
+  function buildAlphaNav() {
+    const letters = new Set(allData.map(d => getKey(d)[0]?.toUpperCase()).filter(Boolean));
+    const nav = document.getElementById('alphaNav');
+    nav.innerHTML = '';
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+      const btn = document.createElement('button');
+      btn.className  = 'alpha-btn' + (activeAlpha === l ? ' active' : '');
+      btn.textContent = l;
+      btn.disabled   = !letters.has(l); // grey out letters not present in dataset
+      btn.onclick    = () => { activeAlpha = activeAlpha === l ? '' : l; buildAlphaNav(); render(); }; // toggle
+      nav.appendChild(btn);
+    });
+  }
+
+  /** creates and returns a single food card DOM element */
+  function makeCard(item) {
+    const card = document.createElement('div');
+    card.className = 'food-card';
+    card.innerHTML = `
+      <div class="food-name">${getKey(item)}</div>
+      <div class="cal-row"><strong>${fmt(item['Caloric Value'], 0)}</strong> kcal / 100g</div>
+      <div class="macros">
+        <div class="macro m-protein"><div class="macro-lbl">Protein</div><div class="macro-val">${fmt(item['Protein'])}g</div></div>
+        <div class="macro m-carb">   <div class="macro-lbl">Carbs</div>  <div class="macro-val">${fmt(item['Carbohydrates'])}g</div></div>
+        <div class="macro m-fat">    <div class="macro-lbl">Fat</div>    <div class="macro-val">${fmt(item['Fat'])}g</div></div>
+        <div class="macro m-fiber">  <div class="macro-lbl">Fiber</div>  <div class="macro-val">${fmt(item['Dietary Fiber'])}g</div></div>
+      </div>`;
+    card.onclick = () => openModal(item);
+    return card;
+  }
+
+
+  // render
+
+  function render() {
+    const data    = applySort(applyFilter(allData));
+    const content = document.getElementById('content');
+
+    document.getElementById('statsBar').innerHTML =
+      `Showing <strong>${data.length}</strong> of <strong>${allData.length}</strong> foods`;
+
+    if (!data.length) {
+      content.innerHTML = '<div class="db-empty"><p>No foods found.</p></div>';
+      return;
+    }
+
+    if (currentSort !== 'alpha' || currentFilter || activeAlpha) {
+      const grid = document.createElement('div');
+      grid.className = 'food-grid';
+      data.forEach(item => grid.appendChild(makeCard(item)));
+      content.innerHTML = '';
+      content.appendChild(grid);
+      return;
+    }
+
+    // default: group cards under their starting letter
+    const groups = {};
+    data.forEach(item => {
+      const l = (getKey(item)[0] || '#').toUpperCase();
+      if (!groups[l]) groups[l] = [];
+      groups[l].push(item);
+    });
+    content.innerHTML = '';
+    Object.keys(groups).sort().forEach(letter => {
+      const section = document.createElement('div');
+      section.className = 'letter-group';
+      const grid = document.createElement('div');
+      grid.className = 'food-grid';
+      groups[letter].forEach(item => grid.appendChild(makeCard(item)));
+      section.innerHTML = `<div class="letter-anchor">${letter}</div>`;
+      section.appendChild(grid);
+      content.appendChild(section);
+    });
+  }
+
+  /** populates and opens the modal for a given food item. */
+  function openModal(item) {
+    document.getElementById('modalTitle').textContent = getKey(item);
+
+    const macros = [
+      { lbl:'Calories', val:fmt(item['Caloric Value'],0), unit:'kcal' },
+      { lbl:'Protein',  val:fmt(item['Protein']),         unit:'g' },
+      { lbl:'Fat',      val:fmt(item['Fat']),              unit:'g' },
+      { lbl:'Carbs',    val:fmt(item['Carbohydrates']),    unit:'g' },
+      { lbl:'Fiber',    val:fmt(item['Dietary Fiber']),    unit:'g' },
+      { lbl:'Water',    val:fmt(item['Water']),            unit:'g' },
+    ];
+
+    // full micronutrient list with display units
+    const micros = [
+      ['Saturated Fats','g'], ['Monounsaturated Fats','g'], ['Polyunsaturated Fats','g'], ['Sugars','g'],
+      ['Cholesterol','mg'], ['Vitamin A','mg'], ['Vitamin C','mg'], ['Vitamin D','mg'],
+      ['Vitamin E','mg'],   ['Vitamin K','mg'], ['Vitamin B1','mg'], ['Vitamin B2','mg'],
+      ['Vitamin B3','mg'],  ['Vitamin B5','mg'], ['Vitamin B6','mg'], ['Vitamin B12','mg'],
+      ['Calcium','mg'], ['Iron','mg'],  ['Magnesium','mg'], ['Phosphorus','mg'],
+      ['Potassium','mg'], ['Zinc','mg'], ['Copper','mg'], ['Manganese','mg'], ['Selenium','mg'],
+    ];
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="modal-macros">
+        ${macros.map(m => `
+          <div class="modal-macro">
+            <div class="label">${m.lbl}</div>
+            <div class="value">${m.val}</div>
+            <div class="unit">${m.unit}</div>
+          </div>`).join('')}
+      </div>
+      <div class="modal-section-label">Vitamins &amp; Minerals <span style="text-transform:none;letter-spacing:0;font-weight:400">(per 100g)</span></div>
+      <div class="nutrient-grid">
+        ${micros.map(([k,u]) => `
+          <div class="nutrient-row">
+            <span class="nutrient-name">${k}</span>
+            <span class="nutrient-val">${fmt(item[k],2)} <span style="font-weight:400;color:var(--muted);font-size:0.7rem">${u}</span></span>
+          </div>`).join('')}
+      </div>`;
+
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  // close modal: via button, backdrop click, or Escape key
+  document.getElementById('modalClose').onclick = () => document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalOverlay').onclick = e => { if (e.target.id === 'modalOverlay') document.getElementById('modalOverlay').classList.remove('open'); };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('modalOverlay').classList.remove('open'); });
+
+
+  // event listener
+
+  document.getElementById('search').addEventListener('input', e => {
+    currentFilter = e.target.value;
+    activeAlpha   = ''; // clear letter filter when typing
+    buildAlphaNav();
+    render();
+  });
+  document.getElementById('sort').addEventListener('change', e => {
+    currentSort = e.target.value;
+    render();
+  });
+
+  // init
+
+  (async () => {
+    try {
+      allData = await loadData(); 
+      buildAlphaNav();
+      render();
+    } catch (err) {
+      document.getElementById('content').innerHTML =
+        '<div class="db-empty"><p>Could not load food data. Check that CSV files are in <code>./data/</code>.</p></div>';
+      console.error(err);
+    }
+  })();
+</script>
+</body>
+</html>
