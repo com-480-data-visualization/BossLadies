@@ -50,7 +50,7 @@ Please, fill the following sections about your project.
 
 ## Milestone 2 (17th April, 5pm)
 
-**The report for Milestone 1 can be found [here](milestone_2/Milestone_2.pdf)**
+**The report for Milestone 2 can be found [here](milestone_2/Milestone_2.pdf)**
 
 **10% of the final grade**
 
