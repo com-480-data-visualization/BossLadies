@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nutrition Database — Build Your Meal</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="js/components.js" defer></script>                                                          
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>        
-  <script src="js/loadData.js"></script>                                                                  
+  <script src="js/components.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="js/loadData.js"></script>
   <style>
-    
+
     /* page layout */
     .db-wrapper { max-width: var(--max-width); margin: 0 auto; padding: 4rem 2rem; }
     .db-wrapper h1 { font-family: var(--font-sans); font-size: clamp(2rem,5vw,3rem);
@@ -19,7 +19,6 @@
     /* search + sort controls */
     .db-controls    { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
     .db-search-wrap { position: relative; flex: 1; min-width: 200px; }
-    /* search icon is positioned absolutely inside the input wrapper */
     .db-search-wrap svg   { position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
                             color: var(--muted); pointer-events: none; opacity: 0.5; }
     .db-search-wrap input { padding-left: 40px; }
@@ -57,14 +56,13 @@
       font-size: 0.85rem; font-weight: 500; color: var(--text);
       margin-bottom: 0.5rem; line-height: 1.3; min-height: 32px;
       display: -webkit-box; -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical; overflow: hidden; 
+      -webkit-box-orient: vertical; overflow: hidden;
     }
     .cal-row { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
                color: var(--muted); margin-bottom: 0.75rem; }
     .cal-row strong { font-size: 1rem; font-weight: 500; text-transform: none;
                       letter-spacing: 0; color: var(--text); }
 
-    
     .macros { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
     .macro  { border-radius: calc(var(--radius) - 2px); padding: 4px 8px; }
     .macro .macro-lbl { font-size: 0.65rem; font-weight: 500; text-transform: uppercase;
@@ -84,7 +82,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200;
       display: flex; align-items: center; justify-content: center; padding: 1rem;
@@ -160,7 +157,6 @@
     </div>
 
     <div class="alpha-nav" id="alphaNav"></div>
-
     <div class="db-stats" id="statsBar"></div>
 
     <div id="content">
@@ -184,7 +180,7 @@
 </div>
 
 <script>
-  // helpers
+  // ── helpers ──────────────────────────────────────────────────────────────────
 
   /** Formats a numeric value to `d` decimal places; returns '–' for missing data. */
   function fmt(v, d = 1) {
@@ -192,26 +188,26 @@
     return Number(v).toFixed(d);
   }
 
-  /** Returns the food name from a data row, falling back through likely key names. */
-  function getKey(d) { return d.food || d.Food || Object.values(d)[0] || ''; }
+  /** Returns the food name from a data row. */
+  function getKey(d) { return d.Descrip || Object.values(d)[1] || ''; }
 
 
-  // state
+  // ── state ────────────────────────────────────────────────────────────────────
 
-  let allData      = [];    // full cleaned dataset, set on init
-  let currentFilter = '';   // live search string
+  let allData       = [];
+  let currentFilter = '';
   let currentSort   = 'alpha';
-  let activeAlpha   = '';   // currently selected A–Z letter ('' = none)
+  let activeAlpha   = '';
 
 
-  // sorting & filtering 
+  // ── sorting & filtering ──────────────────────────────────────────────────────
 
   function applySort(arr) {
     const s = [...arr];
     if      (currentSort === 'alpha')        s.sort((a,b) => getKey(a).localeCompare(getKey(b)));
-    else if (currentSort === 'cal-desc')     s.sort((a,b) => (b['Caloric Value']||0) - (a['Caloric Value']||0));
-    else if (currentSort === 'cal-asc')      s.sort((a,b) => (a['Caloric Value']||0) - (b['Caloric Value']||0));
-    else if (currentSort === 'protein-desc') s.sort((a,b) => (b['Protein']||0) - (a['Protein']||0));
+    else if (currentSort === 'cal-desc')     s.sort((a,b) => (b['Energy_kcal']||0) - (a['Energy_kcal']||0));
+    else if (currentSort === 'cal-asc')      s.sort((a,b) => (a['Energy_kcal']||0) - (b['Energy_kcal']||0));
+    else if (currentSort === 'protein-desc') s.sort((a,b) => (b['Protein_g']||0) - (a['Protein_g']||0));
     return s;
   }
 
@@ -228,33 +224,45 @@
     nav.innerHTML = '';
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
       const btn = document.createElement('button');
-      btn.className  = 'alpha-btn' + (activeAlpha === l ? ' active' : '');
+      btn.className   = 'alpha-btn' + (activeAlpha === l ? ' active' : '');
       btn.textContent = l;
-      btn.disabled   = !letters.has(l); // grey out letters not present in dataset
-      btn.onclick    = () => { activeAlpha = activeAlpha === l ? '' : l; buildAlphaNav(); render(); }; // toggle
+      btn.disabled    = !letters.has(l);
+      btn.onclick     = () => { activeAlpha = activeAlpha === l ? '' : l; buildAlphaNav(); render(); };
       nav.appendChild(btn);
     });
   }
 
-  /** creates and returns a single food card DOM element */
+  /** Creates and returns a single food card DOM element. */
   function makeCard(item) {
     const card = document.createElement('div');
     card.className = 'food-card';
     card.innerHTML = `
       <div class="food-name">${getKey(item)}</div>
-      <div class="cal-row"><strong>${fmt(item['Caloric Value'], 0)}</strong> kcal / 100g</div>
+      <div class="cal-row"><strong>${fmt(item['Energy_kcal'], 0)}</strong> kcal / 100g</div>
       <div class="macros">
-        <div class="macro m-protein"><div class="macro-lbl">Protein</div><div class="macro-val">${fmt(item['Protein'])}g</div></div>
-        <div class="macro m-carb">   <div class="macro-lbl">Carbs</div>  <div class="macro-val">${fmt(item['Carbohydrates'])}g</div></div>
-        <div class="macro m-fat">    <div class="macro-lbl">Fat</div>    <div class="macro-val">${fmt(item['Fat'])}g</div></div>
-        <div class="macro m-fiber">  <div class="macro-lbl">Fiber</div>  <div class="macro-val">${fmt(item['Dietary Fiber'])}g</div></div>
+        <div class="macro m-protein">
+          <div class="macro-lbl">Protein</div>
+          <div class="macro-val">${fmt(item['Protein_g'])}g</div>
+        </div>
+        <div class="macro m-carb">
+          <div class="macro-lbl">Carbs</div>
+          <div class="macro-val">${fmt(item['Carb_g'])}g</div>
+        </div>
+        <div class="macro m-fat">
+          <div class="macro-lbl">Fat</div>
+          <div class="macro-val">${fmt(item['Fat_g'])}g</div>
+        </div>
+        <div class="macro m-fiber">
+          <div class="macro-lbl">Fiber</div>
+          <div class="macro-val">${fmt(item['Fiber_g'])}g</div>
+        </div>
       </div>`;
     card.onclick = () => openModal(item);
     return card;
   }
 
 
-  // render
+  // ── render ───────────────────────────────────────────────────────────────────
 
   function render() {
     const data    = applySort(applyFilter(allData));
@@ -297,27 +305,42 @@
     });
   }
 
-  /** populates and opens the modal for a given food item. */
+  /** Populates and opens the modal for a given food item. */
   function openModal(item) {
     document.getElementById('modalTitle').textContent = getKey(item);
 
     const macros = [
-      { lbl:'Calories', val:fmt(item['Caloric Value'],0), unit:'kcal' },
-      { lbl:'Protein',  val:fmt(item['Protein']),         unit:'g' },
-      { lbl:'Fat',      val:fmt(item['Fat']),              unit:'g' },
-      { lbl:'Carbs',    val:fmt(item['Carbohydrates']),    unit:'g' },
-      { lbl:'Fiber',    val:fmt(item['Dietary Fiber']),    unit:'g' },
-      { lbl:'Water',    val:fmt(item['Water']),            unit:'g' },
+      { lbl:'Calories', val:fmt(item['Energy_kcal'], 0), unit:'kcal' },
+      { lbl:'Protein',  val:fmt(item['Protein_g']),      unit:'g'    },
+      { lbl:'Fat',      val:fmt(item['Fat_g']),           unit:'g'    },
+      { lbl:'Carbs',    val:fmt(item['Carb_g']),          unit:'g'    },
+      { lbl:'Fiber',    val:fmt(item['Fiber_g']),         unit:'g'    },
+      { lbl:'Sugars',   val: item.sugar_unreliable ? 'N/A' : fmt(item['Sugar_g']), unit: item.sugar_unreliable ? '' : 'g' },
     ];
 
-    // full micronutrient list with display units
+    // readable labels for micronutrient display
     const micros = [
-      ['Saturated Fats','g'], ['Monounsaturated Fats','g'], ['Polyunsaturated Fats','g'], ['Sugars','g'],
-      ['Cholesterol','mg'], ['Vitamin A','mg'], ['Vitamin C','mg'], ['Vitamin D','mg'],
-      ['Vitamin E','mg'],   ['Vitamin K','mg'], ['Vitamin B1','mg'], ['Vitamin B2','mg'],
-      ['Vitamin B3','mg'],  ['Vitamin B5','mg'], ['Vitamin B6','mg'], ['Vitamin B12','mg'],
-      ['Calcium','mg'], ['Iron','mg'],  ['Magnesium','mg'], ['Phosphorus','mg'],
-      ['Potassium','mg'], ['Zinc','mg'], ['Copper','mg'], ['Manganese','mg'], ['Selenium','mg'],
+      ['Saturated_fats_g',  'Saturated Fat',  'g'  ],
+      ['VitA_mcg',          'Vitamin A',       'mcg'],
+      ['VitC_mg',           'Vitamin C',       'mg' ],
+      ['VitD2_mcg',         'Vitamin D',       'mcg'],
+      ['VitE_mg',           'Vitamin E',       'mg' ],
+      ['Thiamin_mg',        'Vitamin B1',      'mg' ],
+      ['Riboflavin_mg',     'Vitamin B2',      'mg' ],
+      ['Niacin_mg',         'Vitamin B3',      'mg' ],
+      ['VitB6_mg',          'Vitamin B6',      'mg' ],
+      ['Folate_mcg',        'Folate',          'mcg'],
+      ['VitB12_mcg',        'Vitamin B12',     'mcg'],
+      ['Calcium_mg',        'Calcium',         'mg' ],
+      ['Iron_mg',           'Iron',            'mg' ],
+      ['Magnesium_mg',      'Magnesium',       'mg' ],
+      ['Phosphorus_mg',     'Phosphorus',      'mg' ],
+      ['Potassium_mg',      'Potassium',       'mg' ],
+      ['Sodium_mg',         'Sodium',          'mg' ],
+      ['Zinc_mg',           'Zinc',            'mg' ],
+      ['Copper_mcg',        'Copper',          'mcg'],
+      ['Manganese_mg',      'Manganese',       'mg' ],
+      ['Selenium_mcg',      'Selenium',        'mcg'],
     ];
 
     document.getElementById('modalBody').innerHTML = `
@@ -331,27 +354,25 @@
       </div>
       <div class="modal-section-label">Vitamins &amp; Minerals <span style="text-transform:none;letter-spacing:0;font-weight:400">(per 100g)</span></div>
       <div class="nutrient-grid">
-        ${micros.map(([k,u]) => `
+        ${micros.map(([key, label, unit]) => `
           <div class="nutrient-row">
-            <span class="nutrient-name">${k}</span>
-            <span class="nutrient-val">${fmt(item[k],2)} <span style="font-weight:400;color:var(--muted);font-size:0.7rem">${u}</span></span>
+            <span class="nutrient-name">${label}</span>
+            <span class="nutrient-val">${fmt(item[key], 2)} <span style="font-weight:400;color:var(--muted);font-size:0.7rem">${unit}</span></span>
           </div>`).join('')}
       </div>`;
 
     document.getElementById('modalOverlay').classList.add('open');
   }
 
-  // close modal: via button, backdrop click, or Escape key
-  document.getElementById('modalClose').onclick = () => document.getElementById('modalOverlay').classList.remove('open');
-  document.getElementById('modalOverlay').onclick = e => { if (e.target.id === 'modalOverlay') document.getElementById('modalOverlay').classList.remove('open'); };
+  // close modal
+  document.getElementById('modalClose').onclick   = () => document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalOverlay').onclick  = e  => { if (e.target.id === 'modalOverlay') document.getElementById('modalOverlay').classList.remove('open'); };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('modalOverlay').classList.remove('open'); });
 
-
-  // event listener
-
+  // event listeners
   document.getElementById('search').addEventListener('input', e => {
     currentFilter = e.target.value;
-    activeAlpha   = ''; // clear letter filter when typing
+    activeAlpha   = '';
     buildAlphaNav();
     render();
   });
@@ -361,15 +382,14 @@
   });
 
   // init
-
   (async () => {
     try {
-      allData = await loadData(); 
+      allData = await loadData();
       buildAlphaNav();
       render();
     } catch (err) {
       document.getElementById('content').innerHTML =
-        '<div class="db-empty"><p>Could not load food data. Check that CSV files are in <code>./data/</code>.</p></div>';
+        '<div class="db-empty"><p>Could not load food data. Check that the CSV file is in <code>./archive/</code>.</p></div>';
       console.error(err);
     }
   })();

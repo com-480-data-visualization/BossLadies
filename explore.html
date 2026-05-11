@@ -235,12 +235,12 @@
         <div class="rank-by-row">
           <label for="parallel-sort">Rank by</label>
           <select id="parallel-sort">
-            <option value="Caloric Value">Caloric Value</option>
-            <option value="Protein">Protein</option>
-            <option value="Carbohydrates">Carbohydrates</option>
-            <option value="Fat">Fat</option>
-            <option value="Sugars">Sugars</option>
-            <option value="Dietary Fiber">Dietary Fiber</option>
+            <option value="Energy_kcal">Calories</option>
+            <option value="Protein_g">Protein</option>
+            <option value="Carb_g">Carbohydrates</option>
+            <option value="Fat_g">Fat</option>
+            <option value="Sugar_g">Sugars</option>
+            <option value="Fiber_g">Dietary Fiber</option>
           </select>
         </div>
 
@@ -256,99 +256,68 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script>
-    const COLS_G = [
-      'Fat', 'Saturated Fats', 'Monounsaturated Fats', 'Polyunsaturated Fats',
-      'Carbohydrates', 'Sugars', 'Protein', 'Dietary Fiber', 'Water'
-    ];
-    const COLS_MG = [
-      'Cholesterol', 'Vitamin A', 'Vitamin B1', 'Vitamin B11', 'Vitamin B12',
-      'Vitamin B2', 'Vitamin B3', 'Vitamin B5', 'Vitamin B6', 'Vitamin C',
-      'Vitamin D', 'Vitamin E', 'Vitamin K', 'Calcium', 'Copper', 'Iron',
-      'Magnesium', 'Manganese', 'Phosphorus', 'Potassium', 'Selenium', 'Zinc'
-    ];
-    const MAIN_MACROS = ['Fat', 'Carbohydrates', 'Protein', 'Water'];
 
-    function quantile(sortedValues, q) {
-      const pos = (sortedValues.length - 1) * q;
-      const base = Math.floor(pos);
-      const rest = pos - base;
-      if (base + 1 < sortedValues.length) {
-        return sortedValues[base] + rest * (sortedValues[base + 1] - sortedValues[base]);
-      }
-      return sortedValues[base];
+    // ── column definitions (your schema) ────────────────────────────────────────
+    const CSV_FILE = './archive/cleaned_ingredients.csv';
+
+    // nutrients for radar chart
+    const RADAR_NUTRIENTS = ['Protein_g', 'Carb_g', 'Fat_g', 'Sugar_g', 'Fiber_g'];
+    const RADAR_LABELS    = ['Protein',   'Carbs',  'Fat',   'Sugars',  'Fiber'  ];
+
+    // nutrients for parallel coordinates
+    const PARALLEL_NUTRIENTS = ['Protein_g', 'Carb_g', 'Fat_g', 'Sugar_g', 'Fiber_g', 'Energy_kcal'];
+    const PARALLEL_LABELS    = ['Protein',   'Carbs',  'Fat',   'Sugars',  'Fiber',   'Calories'   ];
+
+    // keywords that make Sugar_g = 0 unreliable
+    const SUSPICIOUS_SUGAR_KEYWORDS = [
+      'muffin', 'donut', 'doughnut', 'pie', 'cake', 'cookie',
+      'brownie', 'pastry', 'waffle', 'pancake', 'candy',
+      'chocolate', 'ice cream', 'pudding', 'tart', 'croissant',
+      'syrup', 'agutuk', 'arrowroot babyfood'
+    ];
+    const SUGAR_FREE_KEYWORDS = ['sugar free', 'sugarfree', 'no sugar', 'unsweetened'];
+
+    function isSugarUnreliable(row) {
+      const descrip = (row['Descrip'] || '').toLowerCase();
+      if (row['Sugar_g'] !== 0) return false;
+      if (SUGAR_FREE_KEYWORDS.some(kw => descrip.includes(kw))) return false;
+      return SUSPICIOUS_SUGAR_KEYWORDS.some(kw => descrip.includes(kw));
     }
 
-    function getUpperLimit(data, col, q = 0.99) {
-      const values = data
-        .map(row => row[col])
-        .filter(v => v != null && !isNaN(v) && v >= 0)
-        .sort((a, b) => a - b);
-      if (values.length === 0) return Infinity;
-      return quantile(values, q);
-    }
-
+    // ── minimal cleaning (no outlier removal — done in Python) ──────────────────
     function filterOutliers(data) {
-      let filtered = data.filter(row => {
-        const gOk      = COLS_G.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100));
-        const mgOk     = COLS_MG.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100000));
-        const macroSum = MAIN_MACROS.reduce((s, col) => s + (row[col] || 0), 0);
-        const sumOk    = macroSum <= 101;
-        const sugarsOk = (row['Sugars'] || 0) <= (row['Carbohydrates'] || 0) + 1;
-        const satFatOk = (row['Saturated Fats'] || 0) <= (row['Fat'] || 0) + 1;
-        const kcalOk   = !(row['Caloric Value']) || (row['Caloric Value'] >= 0 && row['Caloric Value'] <= 900);
-        return gOk && mgOk && sumOk && sugarsOk && satFatOk && kcalOk;
-      });
-
-      const gLimits = {};
-      COLS_G.forEach(col => { gLimits[col] = getUpperLimit(filtered, col, 0.99); });
-      filtered = filtered.filter(row =>
-        COLS_G.every(col => !(col in row) || row[col] <= gLimits[col])
-      );
-
-      const mgLimits = {};
-      COLS_MG.forEach(col => { mgLimits[col] = getUpperLimit(filtered, col, 0.99); });
-      filtered = filtered.filter(row =>
-        COLS_MG.every(col => !(col in row) || row[col] <= mgLimits[col])
-      );
-
-      const kcalLimit = getUpperLimit(filtered, 'Caloric Value', 0.99);
-      filtered = filtered.filter(row =>
-        !(row['Caloric Value']) || row['Caloric Value'] <= kcalLimit
-      );
-
-      return filtered;
+      return data
+        .filter(row => {
+          const sugarsOk = (row['Sugar_g']          || 0) <= (row['Carb_g'] || 0) + 1;
+          const satFatOk = (row['Saturated_fats_g'] || 0) <= (row['Fat_g']  || 0) + 1;
+          return sugarsOk && satFatOk;
+        })
+        .map(row => {
+          if (isSugarUnreliable(row)) return { ...row, Sugar_g: null, sugar_unreliable: true };
+          return { ...row, sugar_unreliable: false };
+        });
     }
-
-    const CSV_FILES = [
-      './data/FOOD-DATA-GROUP1.csv',
-      './data/FOOD-DATA-GROUP2.csv',
-      './data/FOOD-DATA-GROUP3.csv',
-      './data/FOOD-DATA-GROUP4.csv',
-      './data/FOOD-DATA-GROUP5.csv',
-    ];
 
     async function loadData() {
-      const promises = CSV_FILES.map(file =>
-        new Promise((resolve, reject) => {
-          Papa.parse(file, {
-            download: true,
-            header: true,
-            dynamicTyping: true,
-            skipEmptyLines: true,
-            complete: results => resolve(results.data),
-            error: err => reject(err),
-          });
-        })
-      );
-      const groups = await Promise.all(promises);
-      return filterOutliers(groups.flat());
+      return new Promise((resolve, reject) => {
+        Papa.parse(CSV_FILE, {
+          download: true,
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: results => resolve(filterOutliers(results.data)),
+          error: err => reject(err),
+        });
+      });
     }
 
+    // ── state ────────────────────────────────────────────────────────────────────
     let allFoodData = [];
     let radarChart  = null;
 
+    // ── dropdowns ────────────────────────────────────────────────────────────────
     function populateDropdowns(data) {
-      const names   = [...new Set(data.map(d => d.food).filter(Boolean))].sort();
+      const names   = [...new Set(data.map(d => d.Descrip).filter(Boolean))].sort();
       const selectA = document.getElementById('food-a');
       const selectB = document.getElementById('food-b');
       selectA.innerHTML = '';
@@ -361,27 +330,27 @@
       selectB.selectedIndex = Math.min(1, names.length - 1);
     }
 
+    // ── radar chart ──────────────────────────────────────────────────────────────
     function renderRadarChart(food1, food2) {
-      const nutrients = ['Protein', 'Carbohydrates', 'Fat', 'Sugars', 'Dietary Fiber'];
-      const vals1 = nutrients.map(n => Math.max(0, food1[n] || 0));
-      const vals2 = nutrients.map(n => Math.max(0, food2[n] || 0));
+      const vals1 = RADAR_NUTRIENTS.map(n => Math.max(0, food1[n] || 0));
+      const vals2 = RADAR_NUTRIENTS.map(n => Math.max(0, food2[n] || 0));
 
       const canvas = document.getElementById('radarChart');
       canvas.style.display = 'block';
       document.getElementById('loading-msg').style.display  = 'none';
       document.getElementById('chart-legend').style.display = 'flex';
-      document.getElementById('legend-a').textContent = food1.food;
-      document.getElementById('legend-b').textContent = food2.food;
+      document.getElementById('legend-a').textContent = food1.Descrip;
+      document.getElementById('legend-b').textContent = food2.Descrip;
 
       if (radarChart) radarChart.destroy();
 
       radarChart = new Chart(canvas, {
         type: 'radar',
         data: {
-          labels: nutrients,
+          labels: RADAR_LABELS,
           datasets: [
             {
-              label: food1.food,
+              label: food1.Descrip,
               data: vals1,
               backgroundColor: 'rgba(22,163,74,0.2)',
               borderColor: 'rgba(22,163,74,0.9)',
@@ -390,7 +359,7 @@
               borderWidth: 2,
             },
             {
-              label: food2.food,
+              label: food2.Descrip,
               data: vals2,
               backgroundColor: 'rgba(37,99,235,0.15)',
               borderColor: 'rgba(37,99,235,0.9)',
@@ -431,16 +400,15 @@
       const nameA = document.getElementById('food-a').value;
       const nameB = document.getElementById('food-b').value;
       if (!nameA || !nameB) return;
-      const foodA = allFoodData.find(d => d.food === nameA);
-      const foodB = allFoodData.find(d => d.food === nameB);
+      const foodA = allFoodData.find(d => d.Descrip === nameA);
+      const foodB = allFoodData.find(d => d.Descrip === nameB);
       if (foodA && foodB) renderRadarChart(foodA, foodB);
     }
 
+    // ── parallel coordinates ─────────────────────────────────────────────────────
     function renderParallelChart(data, sortCol) {
-      const NUTRIENTS = ['Protein', 'Carbohydrates', 'Fat', 'Sugars', 'Dietary Fiber', 'Caloric Value'];
-
-      let rankBy = sortCol;
-      if (!(rankBy in (data[0] || {}))) rankBy = 'Protein';
+      // fallback if column not found
+      const rankBy = PARALLEL_NUTRIENTS.includes(sortCol) ? sortCol : 'Energy_kcal';
 
       const top50 = [...data]
         .filter(d => (d[rankBy] || 0) > 0)
@@ -463,8 +431,9 @@
       root.selectAll('*').remove();
       const g = root.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
+      // one y scale per nutrient column
       const yScales = {};
-      NUTRIENTS.forEach(n => {
+      PARALLEL_NUTRIENTS.forEach(n => {
         const vals = top50.map(d => +d[n] || 0);
         yScales[n] = d3.scaleLinear()
           .domain([0, d3.max(vals) * 1.05])
@@ -472,12 +441,12 @@
       });
 
       const xScale = d3.scalePoint()
-        .domain(NUTRIENTS)
+        .domain(PARALLEL_NUTRIENTS)
         .range([0, W])
         .padding(0.1);
 
       function path(d) {
-        return d3.line()(NUTRIENTS.map(n => [xScale(n), yScales[n](+d[n] || 0)]));
+        return d3.line()(PARALLEL_NUTRIENTS.map(n => [xScale(n), yScales[n](+d[n] || 0)]));
       }
 
       const tooltip = document.getElementById('parallel-tooltip');
@@ -491,11 +460,12 @@
           tooltip.style.display = 'block';
           tooltip.style.left = (event.clientX + 14) + 'px';
           tooltip.style.top  = (event.clientY - 28) + 'px';
-          tooltip.textContent = d.food || '—';
+          tooltip.textContent = d.Descrip || '—';
         })
         .on('mouseleave', () => { tooltip.style.display = 'none'; });
 
-      NUTRIENTS.forEach(n => {
+      // draw axes with human-readable labels
+      PARALLEL_NUTRIENTS.forEach((n, i) => {
         const axisG = g.append('g')
           .attr('class', 'pc-axis')
           .attr('transform', `translate(${xScale(n)},0)`);
@@ -506,10 +476,11 @@
           .attr('class', 'axis-label')
           .attr('y', -14)
           .attr('text-anchor', 'middle')
-          .text(n);
+          .text(PARALLEL_LABELS[i]);  // human-readable label
       });
     }
 
+    // ── init ─────────────────────────────────────────────────────────────────────
     async function init() {
       allFoodData = await loadData();
       populateDropdowns(allFoodData);

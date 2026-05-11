@@ -1,133 +1,81 @@
-// data files
-const csv_files = [
-    './data/FOOD-DATA-GROUP1.csv',
-    './data/FOOD-DATA-GROUP2.csv',
-    './data/FOOD-DATA-GROUP3.csv',
-    './data/FOOD-DATA-GROUP4.csv',
-    './data/FOOD-DATA-GROUP5.csv',
-  ];
-  
-  // nutrients measured in grams 
-  const COLS_G = [
-    'Fat', 'Saturated Fats', 'Monounsaturated Fats', 'Polyunsaturated Fats',
-    'Carbohydrates', 'Sugars', 'Protein', 'Dietary Fiber', 'Water'
-  ];
-  // nutrients measured in mg 
-  const COLS_MG = [
-    'Cholesterol', 'Vitamin A', 'Vitamin B1', 'Vitamin B11', 'Vitamin B12',
-    'Vitamin B2', 'Vitamin B3', 'Vitamin B5', 'Vitamin B6', 'Vitamin C',
-    'Vitamin D', 'Vitamin E', 'Vitamin K', 'Calcium', 'Copper', 'Iron',
-    'Magnesium', 'Manganese', 'Phosphorus', 'Potassium', 'Selenium', 'Zinc'
-  ];
-  // macronutrients whose weight should not exceed 100g 
-  const MAIN_MACROS = ['Fat', 'Carbohydrates', 'Protein', 'Water'];
-  
-  /**
- * computes the q-th quantile
- * @param {number[]} sortedValues - Ascending-sorted array of numbers
- * @param {number}   q            - Quantile in [0, 1]
- * @returns {number}
- */
-  function quantile(sortedValues, q) {
-    const pos = (sortedValues.length - 1) * q;
-    const base = Math.floor(pos);
-    const rest = pos - base;
-    if (base + 1 < sortedValues.length) {
-      return sortedValues[base] + rest * (sortedValues[base + 1] - sortedValues[base]);
-    }
-    return sortedValues[base];
-  }
-  /**
- * returns the upper bound at the given quantile for a numeric column, ignoring NaN rows.
- * @param {Object[]} data - Full dataset
- * @param {string}   col  - Column name
- * @param {number}   q    - Quantile threshold (default: 0.999)
- * @returns {number}
- */
+// data file
+const CSV_FILE = './archive/cleaned_ingredients.csv';
 
-  function getUpperLimit(data, col, q = 0.999) {
-    const values = data
-      .map(row => row[col])
-      .filter(v => v != null && !isNaN(v))
-      .sort((a, b) => a - b);
-    return quantile(values, q);
-  }
-  // outlier removal 
+// nutrients measured in grams
+const COLS_G = [
+  'Protein_g', 'Saturated_fats_g', 'Fat_g', 'Carb_g', 'Fiber_g', 'Sugar_g'
+];
+
+// nutrients measured in mg or mcg
+const COLS_MG = [
+  'Calcium_mg', 'Iron_mg', 'Magnesium_mg', 'Phosphorus_mg', 'Potassium_mg',
+  'Sodium_mg', 'Zinc_mg', 'Copper_mcg', 'Manganese_mg', 'Selenium_mcg',
+  'VitC_mg', 'Thiamin_mg', 'Riboflavin_mg', 'Niacin_mg', 'VitB6_mg',
+  'Folate_mcg', 'VitB12_mcg', 'VitA_mcg', 'VitE_mg', 'VitD2_mcg'
+];
+
+// keywords that make Sugar_g = 0 unreliable (unless "sugar free")
+const SUSPICIOUS_SUGAR_KEYWORDS = [
+  'muffin', 'donut', 'doughnut', 'pie', 'cake', 'cookie',
+  'brownie', 'pastry', 'waffle', 'pancake', 'candy',
+  'chocolate', 'ice cream', 'pudding', 'tart', 'croissant',
+  'syrup', 'agutuk', 'arrowroot babyfood'
+];
+
+const SUGAR_FREE_KEYWORDS = [
+  'sugar free', 'sugarfree', 'no sugar', 'unsweetened'
+];
+
 /**
- * removes physically impossible and statistically extreme rows from the dataset.
- * filtering is applied in four successive passes:
- *   1. hard physical constraints (absolute bounds + internal coherence)
- *   2. 99th-percentile cap on gram columns
- *   3. 99th-percentile cap on milligram columns
- *   4. 99th-percentile cap on caloric value
+ * returns true if this row has a suspicious Sugar_g = 0
+ * (implausible zero, not explicitly sugar-free)
+ */
+function isSugarUnreliable(row) {
+  const descrip = (row['Descrip'] || '').toLowerCase();
+  if (row['Sugar_g'] !== 0) return false;
+  const isSugarFree = SUGAR_FREE_KEYWORDS.some(kw => descrip.includes(kw));
+  if (isSugarFree) return false;
+  return SUSPICIOUS_SUGAR_KEYWORDS.some(kw => descrip.includes(kw));
+}
+
+/**
+ * applies minimal cleaning:
+ *   1. internal coherence (Sugars ⊆ Carbs, SatFat ⊆ Fat)
+ *   2. flags suspicious Sugar_g = 0 rows (sets Sugar_g to null)
  *
- * @param {Object[]} data - Raw parsed dataset
- * @returns {Object[]}    - Cleaned dataset
+ * no outlier removal — already handled in Python EDA.
  */
-  function filterOutliers(data) {
-    // 1. hard filtering
-    let filtered = data.filter(row => {
-      // each nutrient in g cannot exceed 100g
-      const gOk = COLS_G.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100));
-  
-      // constraints in mg 
-      const mgOk = COLS_MG.every(col => !(col in row) || (row[col] >= 0 && row[col] <= 100000));
-  
-      // sum Fat+Carbs+Protein+Water < 100g
-      const macroSum = MAIN_MACROS.reduce((sum, col) => sum + (row[col] || 0), 0);
-      const sumOk = macroSum <= 101;
-  
-      // internal constraint
-      const sugarsOk = (row['Sugars'] || 0) <= (row['Carbohydrates'] || 0) + 1; // Sugars ⊆ Carbs
-      const satFatOk = (row['Saturated Fats'] || 0) <= (row['Fat'] || 0) + 1;   // SatFat ⊆ Fat
-  
-      // caloric value
-      const kcalOk = !(row['Caloric Value']) || (row['Caloric Value'] >= 0 && row['Caloric Value'] <= 900);
-  
-      return gOk && mgOk && sumOk && sugarsOk && satFatOk && kcalOk;
+function filterOutliers(data) {
+  return data
+    .filter(row => {
+      // Sugars must be a subset of Carbs (with small tolerance for rounding)
+      const sugarsOk = (row['Sugar_g'] || 0) <= (row['Carb_g'] || 0) + 1;
+      // Saturated fat must be a subset of total fat
+      const satFatOk = (row['Saturated_fats_g'] || 0) <= (row['Fat_g'] || 0) + 1;
+      return sugarsOk && satFatOk;
+    })
+    .map(row => {
+      // flag unreliable sugar as null so UI can show "N/A" instead of 0
+      if (isSugarUnreliable(row)) {
+        return { ...row, Sugar_g: null, sugar_unreliable: true };
+      }
+      return { ...row, sugar_unreliable: false };
     });
-  
-    // 2. percentile cap on gram columns
-    const gLimits = {};
-    COLS_G.forEach(col => { gLimits[col] = getUpperLimit(filtered, col, 0.99); });
-    filtered = filtered.filter(row =>
-      COLS_G.every(col => !(col in row) || row[col] <= gLimits[col])
-    );
-  
-    // 3. Percentile filtering on mg columns
-    const mgLimits = {};
-    COLS_MG.forEach(col => { mgLimits[col] = getUpperLimit(filtered, col, 0.99); });
-    filtered = filtered.filter(row =>
-      COLS_MG.every(col => !(col in row) || row[col] <= mgLimits[col])
-    );
-  
-    // 4. percentile for caloric value
-    const kcalLimit = getUpperLimit(filtered, 'Caloric Value', 0.99);
-    filtered = filtered.filter(row =>
-      !(row['Caloric Value']) || row['Caloric Value'] <= kcalLimit
-    );
-  
-    return filtered;
-  }
-  // data loading 
-  /**
- * fetches and parses all CSV files in parallel, merges them into a single
- * dataset, and returns it after outlier removal.
+}
+
+/**
+ * fetches and parses the CSV, returns cleaned dataset.
  */
-  async function loadData() {
-    const promises = csv_files.map(file =>
-      new Promise((resolve, reject) => {
-        Papa.parse(file, {
-          download: true,
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: results => resolve(results.data),
-          error: err => reject(err),
-        });
-      })
-    );
-    const groups = await Promise.all(promises);
-    const allFood = groups.flat();
-    return filterOutliers(allFood);
-  }
+async function loadData() {
+  const data = await new Promise((resolve, reject) => {
+    Papa.parse(CSV_FILE, {
+      download: true,
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      complete: results => resolve(results.data),
+      error: err => reject(err),
+    });
+  });
+  return filterOutliers(data);
+}

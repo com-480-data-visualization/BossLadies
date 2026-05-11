@@ -6,18 +6,410 @@
   <title>Build Your Meal</title>
   <link rel="stylesheet" href="style.css" />
   <script src="js/components.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    /* ── hero ───────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .hero h1 { color: var(--text); font-size: clamp(3.5rem, 8vw, 6rem); }
+
+    /* ── about ──────────────────────────────────────────────────── */
+    .about-section {
+      max-width: var(--max-width); margin: 0 auto;
+      padding: 6rem 2rem; border-top: 1px solid var(--border);
+    }
+    .about-section h2 {
+      font-family: var(--font-sans);
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      letter-spacing: -0.03em; line-height: 1.1;
+      color: var(--text); margin-bottom: 2rem;
+    }
+    .about-body { display: flex; flex-direction: column; gap: 1.25rem; max-width: 680px; }
+    .about-body p { font-size: 0.95rem; line-height: 1.8; color: var(--text); margin: 0; }
+
+    /* ── cta ────────────────────────────────────────────────────── */
+    .cta-section {
+      max-width: var(--max-width); margin: 0 auto;
+      padding: 4rem 2rem; border-top: 1px solid var(--border);
+    }
+    .cta-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .cta-card h3 { font-size: 1.1rem; font-weight: 500; letter-spacing: -0.02em; color: var(--text); margin: 0; }
+    .cta-card p  { font-size: 0.88rem; line-height: 1.7; color: var(--text); margin: 0; opacity: 0.7; flex: 1; }
+
+    /* ── calorie input section ──────────────────────────────────── */
+    .calorie-section {
+      max-width: var(--max-width); margin: 0 auto;
+      padding: 4rem 2rem; border-top: 1px solid var(--border);
+    }
+    .calorie-section h2 {
+      font-family: var(--font-sans);
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      letter-spacing: -0.03em; color: var(--text); margin-bottom: 0.5rem;
+    }
+    .calorie-section .subtitle {
+      font-size: 0.9rem; color: var(--muted); margin-bottom: 2rem;
+    }
+    .calorie-input-row {
+      display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+    }
+    .calorie-input-row input {
+      width: 220px; font-size: 1.1rem; padding: 0.8rem 1rem;
+    }
+    .calorie-input-row .btn {
+      background: var(--text); color: var(--bg-card);
+      padding: 0.8rem 1.8rem; font-size: 0.95rem; cursor: pointer;
+      border: none; border-radius: var(--radius); font-family: var(--font-sans);
+      font-weight: 500; transition: opacity 0.2s;
+    }
+    .calorie-input-row .btn:hover { opacity: 0.8; }
+
+    /* ── meal results ───────────────────────────────────────────── */
+    #meal-results {
+      display: none;
+      max-width: var(--max-width); margin: 0 auto;
+      padding: 0 2rem 6rem;
+    }
+    #meal-results.visible { display: block; }
+
+    .meal-summary {
+      font-size: 0.9rem; color: var(--muted);
+      margin-bottom: 2.5rem; padding-top: 2rem;
+    }
+    .meal-summary strong { color: var(--text); font-size: 1rem; }
+
+    .meals-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* ── meal card ──────────────────────────────────────────────── */
+    .meal-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 1.25rem;
+    }
+    .meal-card-title {
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted);
+    }
+    .meal-kcal {
+      font-size: 1.5rem; font-weight: 500; color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .meal-kcal span { font-size: 0.8rem; font-weight: 400; color: var(--muted); }
+
+    /* plate SVG container */
+    .plate-wrap { display: flex; justify-content: center; }
+    .plate-wrap svg { width: 160px; height: 160px; }
+
+    /* macro slots */
+    .macro-slots { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .macro-slot {
+      border-radius: calc(var(--radius) - 2px);
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: transform 0.15s;
+      position: relative;
+    }
+    .macro-slot:hover { transform: translateY(-1px); }
+
+    .slot-protein { background: #fce8e8; }
+    .slot-carb    { background: #fef9ec; }
+    .slot-veg     { background: #edfaf3; }
+    .slot-fat     { background: #f5edfb; }
+
+    .slot-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.3rem;
+    }
+    .slot-label {
+      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; opacity: 0.6;
+    }
+    .slot-grams { font-size: 0.75rem; font-weight: 500; opacity: 0.7; }
+
+    .slot-food { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+
+    /* substitutions dropdown */
+    .substitutions {
+      display: none; margin-top: 0.5rem;
+      border-top: 1px solid rgba(0,0,0,0.08); padding-top: 0.5rem;
+    }
+    .substitutions.open { display: block; }
+    .sub-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.5; margin-bottom: 0.3rem; }
+    .sub-item {
+      font-size: 0.8rem; color: var(--text); padding: 0.2rem 0;
+      opacity: 0.75; cursor: pointer; transition: opacity 0.15s;
+    }
+    .sub-item:hover { opacity: 1; text-decoration: underline; }
+
+    .swap-hint {
+      font-size: 0.65rem; color: var(--muted); text-align: right;
+      margin-top: 0.2rem; opacity: 0.6;
+    }
+
+    @media (max-width: 768px) {
+      .meals-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body class="home">
-  <main>
-    <section class="hero">
-      <h1>Tell us about yourself to discover personalized food items you can choose from</h1>
-      <a href="#" class="btn">Know more about it</a>
-    </section>
-    <section class="section">
-      <h2>Use our TDEE to find your calorie needs, then enter them here to discover portions adapted to you.</h2>
-      <a href="tdee.html" class="btn">Calculate my TDEE</a>
-    </section>
-  </main>
-  <script src="script.js"></script>
+<main>
+
+  <!-- ── hero ──────────────────────────────────────────────────── -->
+  <section class="hero" style="position:relative;">
+    <img src="assets/banana.png" style="position:absolute;left:-500px;bottom:-40px;width:400px;opacity:0.9;pointer-events:none;z-index:0;">
+    <img src="assets/yellow.png" style="position:absolute;left:-650px;top:18%;width:600px;opacity:0.9;pointer-events:none;z-index:0;transform:translateY(-50%);mix-blend-mode:normal;">
+    <img src="assets/grapefruit.png" style="position:absolute;left:-500px;top:50%;width:400px;opacity:0.9;pointer-events:none;z-index:0;transform:translateY(-50%);mix-blend-mode:normal;">
+    <img src="assets/brocoli.png" style="position:absolute;right:-525px;top:50%;width:400px;opacity:0.9;pointer-events:none;z-index:0;transform:translateY(-50%);mix-blend-mode:normal;">
+    <img src="assets/avocado.png" style="position:absolute;right:-450px;top:80%;width:400px;opacity:0.9;pointer-events:none;z-index:0;transform:translateY(-50%);mix-blend-mode:normal;">
+    <img src="assets/strawberry.png" style="position:absolute;right:-525px;top:18%;width:400px;opacity:0.9;pointer-events:none;z-index:0;transform:translateY(-50%);mix-blend-mode:normal;">
+    <div style="max-width:var(--max-width);margin:0 auto;padding:6rem 2rem 4rem;width:100%;position:relative;z-index:1;">
+      <h1>Eat better. <em>Simply.</em></h1>
+      <p style="font-size:1.7rem;line-height:1.75;color:var(--text);max-width:600px;margin-top:1.25rem;opacity:0.85;">
+        Nutrition is the key to a healthy weight, better mood, restorative sleep, and a longer life.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── about ─────────────────────────────────────────────────── -->
+  <section class="about-section">
+    <h2>We are reinventing personalized nutrition.</h2>
+    <div class="about-body">
+      <p>Our platform helps you understand your calorie needs based on your goals whether it's losing weight, gaining muscle, or maintaining a healthier lifestyle. At a glance, discover the foods that best match your needs and easily build balanced meals tailored to your preferences.</p>
+      <p>With personalized recommendations and a clear representation of ideal portions, you can create your own plate, better understand your nutrition, and build healthier habits every day.</p>
+    </div>
+  </section>
+
+  <!-- ── tdee cta ───────────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="cta-card">
+      <h3>Calculate my TDEE</h3>
+      <p>Find out how many calories your body needs based on your age, weight, height, and activity level.</p>
+      <a href="tdee.html" class="btn" style="align-self:flex-start;">Get started</a>
+    </div>
+  </section>
+
+  <!-- ── calorie goal input ─────────────────────────────────────── -->
+  <section class="calorie-section">
+    <h2>Build your meal plate</h2>
+    <p class="subtitle">Enter your daily calorie goal to see three balanced meal suggestions.</p>
+    <div class="calorie-input-row">
+      <input type="number" id="calorie-input" placeholder="e.g. 1800" min="800" max="5000" />
+      <button class="btn" id="build-btn">Build my plate</button>
+    </div>
+  </section>
+
+  <!-- ── meal results (hidden until input) ─────────────────────── -->
+  <section id="meal-results">
+    <div class="meal-summary" id="meal-summary"></div>
+    <div class="meals-grid" id="meals-grid"></div>
+  </section>
+
+</main>
+<script src="script.js"></script>
+<script>
+// ── category inference ─────────────────────────────────────────────────────
+const CATEGORIES = {
+  protein: ['chicken','beef','turkey','salmon','tuna','egg','shrimp','pork','lamb',
+            'tofu','cod','tilapia','sardine','herring','duck','veal','bison','crab',
+            'lobster','scallop','mussel','anchovy','trout','bass','halibut','prawn'],
+  carb:    ['rice','pasta','bread','potato','oat','quinoa','noodle','cereal','tortilla',
+            'couscous','barley','rye','wheat','corn','maize','millet','bagel','muffin',
+            'waffle','pancake','cracker','roll','bun','wrap','pita','yam','sweet potato'],
+  veg:     ['broccoli','spinach','carrot','tomato','lettuce','pepper','zucchini',
+            'cucumber','kale','onion','cabbage','cauliflower','asparagus','celery',
+            'mushroom','eggplant','artichoke','leek','radish','turnip','beet','chard',
+            'arugula','endive','fennel','pea','bean','lentil','chickpea'],
+  fat:     ['oil','butter','avocado','almond','walnut','peanut','cashew','olive',
+            'seed','flaxseed','chia','coconut','cream','lard','ghee','tahini',
+            'macadamia','pecan','hazelnut','pistachio','sunflower seed','pumpkin seed']
+};
+
+function inferCategory(descrip) {
+  const d = descrip.toLowerCase();
+  for (const [cat, keywords] of Object.entries(CATEGORIES)) {
+    if (keywords.some(k => d.includes(k))) return cat;
+  }
+  return null;
+}
+
+// ── plate SVG ──────────────────────────────────────────────────────────────
+// draws a 4-slice pie (protein 25%, carb 50%, veg 15%, fat 10%)
+function makePlateSVG() {
+  const cx = 80, cy = 80, r = 70;
+  const slices = [
+    { pct: 0.25, color: '#f87171', label: 'Protein' },
+    { pct: 0.50, color: '#fbbf24', label: 'Carbs'   },
+    { pct: 0.15, color: '#4ade80', label: 'Veg'     },
+    { pct: 0.10, color: '#c084fc', label: 'Fat'     },
+  ];
+
+  function polarToXY(angle, radius) {
+    return [
+      cx + radius * Math.cos(angle),
+      cy + radius * Math.sin(angle)
+    ];
+  }
+
+  let paths = '';
+  let startAngle = -Math.PI / 2;
+  for (const s of slices) {
+    const endAngle = startAngle + s.pct * 2 * Math.PI;
+    const [x1, y1] = polarToXY(startAngle, r);
+    const [x2, y2] = polarToXY(endAngle, r);
+    const large = s.pct > 0.5 ? 1 : 0;
+    paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z"
+                    fill="${s.color}" opacity="0.85" stroke="#fff" stroke-width="2"/>`;
+    startAngle = endAngle;
+  }
+
+  // plate rim
+  const rim = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e0ddd8" stroke-width="3"/>`;
+
+  return `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">${paths}${rim}</svg>`;
+}
+
+// ── food dataset ───────────────────────────────────────────────────────────
+let foodData = [];
+
+async function loadFoodData() {
+  return new Promise((resolve) => {
+    Papa.parse('./archive/cleaned_ingredients.csv', {
+      download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
+      complete: r => resolve(r.data),
+      error: () => resolve([])
+    });
+  });
+}
+
+function getFoodsForCategory(cat, targetGrams, n = 3) {
+  const macroCol = cat === 'protein' ? 'Protein_g'
+                 : cat === 'carb'    ? 'Carb_g'
+                 : cat === 'veg'     ? 'Fiber_g'
+                 : 'Fat_g';
+
+  return foodData
+    .filter(d => inferCategory(d.Descrip || '') === cat)
+    .filter(d => (d[macroCol] || 0) > 2)
+    .sort((a, b) => Math.abs((a[macroCol] || 0) - targetGrams) - Math.abs((b[macroCol] || 0) - targetGrams))
+    .slice(0, n);
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// ── render one meal card ───────────────────────────────────────────────────
+function renderMealCard(mealName, kcal) {
+  const proteinKcal = kcal * 0.25;
+  const carbKcal    = kcal * 0.50;
+  const fatKcal     = kcal * 0.10;
+  const vegKcal     = kcal * 0.15;
+
+  const proteinG = proteinKcal / 4;
+  const carbG    = carbKcal    / 4;
+  const fatG     = fatKcal     / 9;
+  const vegG     = vegKcal     / 4;
+
+  const slots = [
+    { key: 'protein', label: 'Protein', grams: proteinG, cls: 'slot-protein', foods: getFoodsForCategory('protein', proteinG) },
+    { key: 'carb',    label: 'Carbs',   grams: carbG,    cls: 'slot-carb',    foods: getFoodsForCategory('carb',    carbG)    },
+    { key: 'veg',     label: 'Vegetables', grams: vegG,  cls: 'slot-veg',     foods: getFoodsForCategory('veg',     vegG)     },
+    { key: 'fat',     label: 'Fat',     grams: fatG,     cls: 'slot-fat',     foods: getFoodsForCategory('fat',     fatG)     },
+  ];
+
+  const slotsHTML = slots.map((s, i) => {
+    const primary = s.foods[0] ? capitalize(s.foods[0].Descrip) : '—';
+    const subs    = s.foods.slice(1).map(f =>
+      `<div class="sub-item" onclick="swapFood(this, '${capitalize(f.Descrip).replace(/'/g,"\\'")}')">
+        ${capitalize(f.Descrip)}
+       </div>`
+    ).join('');
+
+    return `
+      <div class="macro-slot ${s.cls}" onclick="toggleSubs(this)">
+        <div class="slot-header">
+          <span class="slot-label">${s.label}</span>
+          <span class="slot-grams">${s.grams.toFixed(0)}g</span>
+        </div>
+        <div class="slot-food">${primary}</div>
+        ${subs ? `
+          <div class="substitutions">
+            <div class="sub-label">Swap with</div>
+            ${subs}
+          </div>
+          <div class="swap-hint">tap to see swaps ↓</div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="meal-card">
+      <div class="meal-card-title">${mealName}</div>
+      <div class="meal-kcal">${Math.round(kcal)} <span>kcal</span></div>
+      <div class="plate-wrap">${makePlateSVG()}</div>
+      <div class="macro-slots">${slotsHTML}</div>
+    </div>`;
+}
+
+// ── toggle substitutions ───────────────────────────────────────────────────
+function toggleSubs(el) {
+  const subs = el.querySelector('.substitutions');
+  const hint = el.querySelector('.swap-hint');
+  if (!subs) return;
+  subs.classList.toggle('open');
+  if (hint) hint.style.display = subs.classList.contains('open') ? 'none' : 'block';
+}
+
+function swapFood(el, name) {
+  const slot = el.closest('.macro-slot');
+  slot.querySelector('.slot-food').textContent = name;
+  slot.querySelector('.substitutions').classList.remove('open');
+  const hint = slot.querySelector('.swap-hint');
+  if (hint) hint.style.display = 'block';
+}
+
+// ── build plates ───────────────────────────────────────────────────────────
+async function buildPlates() {
+  const raw = parseInt(document.getElementById('calorie-input').value);
+  if (!raw || raw < 400 || raw > 8000) {
+    alert('Please enter a valid calorie goal (400 – 8000 kcal).');
+    return;
+  }
+
+  if (foodData.length === 0) {
+    foodData = await loadFoodData();
+  }
+
+  const perMeal = raw / 3;
+  const meals   = ['Breakfast', 'Lunch', 'Dinner'];
+
+  document.getElementById('meal-summary').innerHTML =
+    `Daily goal: <strong>${raw} kcal</strong> &nbsp;·&nbsp; Per meal: <strong>${Math.round(perMeal)} kcal</strong>
+     &nbsp;·&nbsp; Protein 25% &nbsp;·&nbsp; Carbs 50% &nbsp;·&nbsp; Veg 15% &nbsp;·&nbsp; Fat 10%`;
+
+  document.getElementById('meals-grid').innerHTML =
+    meals.map(m => renderMealCard(m, perMeal)).join('');
+
+  const results = document.getElementById('meal-results');
+  results.classList.add('visible');
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('build-btn').addEventListener('click', buildPlates);
+document.getElementById('calorie-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') buildPlates();
+});
+</script>
 </body>
 </html>

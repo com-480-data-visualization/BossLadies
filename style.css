@@ -4,7 +4,7 @@
   --bg:           #9fcb98;
   --bg-card:      #ffffff;
   --text:         #1a1a1a;
-  --muted:        #1a1a1a;
+  --muted:        #6b7280;
   --accent:       #2a5cff;
   --border:       #e0ddd8;
   --radius:       8px;
@@ -22,17 +22,6 @@ body {
   color: var(--text);
   line-height: 1.7;
   position: relative;
-}
-
-.home::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url('./assets/home1.jpg');
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.5);
-  z-index: -1;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -78,14 +67,11 @@ nav a:hover, nav a.active { color: var(--text); }
 }
 .hero h1 {
   font-family: var(--font-sans);
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(6.5rem, 8vw, 6rem);
   line-height: 1.1;
   letter-spacing: -0.03em;
   margin-bottom: 1rem;
-  color: #ffffff;
-}
-.hero > p {
-  color: #ffffff;
+  color: var(--text);
 }
 
 /* ─── Button ─────────────────────────────────── */
@@ -100,23 +86,6 @@ nav a:hover, nav a.active { color: var(--text); }
   transition: opacity 0.2s;
 }
 .btn:hover { opacity: 0.8; }
-/* ─── Sections ───────────────────────────────── */
-.section {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 4rem 2rem;
-  border-top: 1px solid var(--border);
-}
-.section h2 {
-  font-family: var(--font-sans);
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #ffffff;
-}
-.section a:not(.btn) {
-  color: #ffffff;
-}
-
 
 /* ─── Footer ─────────────────────────────────── */
 footer {
@@ -124,9 +93,10 @@ footer {
   margin: 0 auto;
   padding: 2rem;
   border-top: 1px solid var(--border);
-  color: #ffffff;
+  color: var(--text);
   font-size: 0.85rem;
 }
+
 /* ─── TDEE Calculator ────────────────────────── */
 .calc-wrapper {
   max-width: 560px;
