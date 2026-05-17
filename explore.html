@@ -8,18 +8,13 @@
   <script src="js/components.js" defer></script>
   <style>
     .explore-wrapper {
-      max-width: 900px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 2rem 1.5rem 4rem;
     }
 
-    .explore-wrapper h1 {
-      margin-bottom: 0.25rem;
-    }
-
-    .explore-wrapper .subtitle {
-      margin-bottom: 2rem;
-    }
+    .explore-wrapper h1 { margin-bottom: 0.25rem; }
+    .explore-wrapper .subtitle { margin-bottom: 2rem; }
 
     .compare-selectors {
       display: grid;
@@ -28,11 +23,7 @@
       margin-bottom: 2rem;
     }
 
-    .selector-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
+    .selector-card { display: flex; flex-direction: column; gap: 0.4rem; }
 
     .selector-card label {
       display: block;
@@ -84,10 +75,7 @@
       margin-bottom: 1.5rem;
     }
 
-    .radar-container {
-      max-width: 500px;
-      margin: 0 auto;
-    }
+    .radar-container { max-width: 500px; margin: 0 auto; }
 
     .loading-msg {
       text-align: center;
@@ -149,13 +137,21 @@
       background-position: right 0.6rem center;
     }
 
+    /* parallel chart + list layout */
+    .parallel-layout {
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
     #parallel-svg {
       width: 100%;
       overflow: visible;
+      display: block;
     }
-    .pc-axis path, .pc-axis line {
-      stroke: #c8bb8a;
-    }
+
+    .pc-axis path, .pc-axis line { stroke: #c8bb8a; }
     .pc-axis text {
       fill: #374151;
       font-size: 12px;
@@ -167,23 +163,208 @@
       font-weight: 600;
       font-family: var(--font-sans);
     }
+
     .pc-line {
       fill: none;
       stroke: #e91e8c;
       stroke-width: 1.5;
       stroke-opacity: 0.35;
-      transition: stroke-opacity 0.15s;
+      cursor: pointer;
+      transition: stroke-opacity 0.12s, stroke-width 0.12s;
     }
-    .pc-line:hover {
-      stroke-opacity: 1;
-      stroke-width: 2.5;
-      stroke: #2a5cff;
+    .pc-line.hovered {
+      stroke: #2563eb !important;
+      stroke-opacity: 1 !important;
+      stroke-width: 3.5 !important;
+    }
+    .pc-line.pinned {
+      stroke: #f59e0b !important;
+      stroke-opacity: 1 !important;
+      stroke-width: 3px !important;
+    }
+    .pc-line.dimmed {
+      stroke-opacity: 0.07 !important;
     }
 
-    @media (max-width: 600px) {
-      .compare-selectors {
-        grid-template-columns: 1fr;
-      }
+    /* food list */
+    .food-list-panel {
+      max-height: 420px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 0.25rem 0;
+      background: #fafaf9;
+    }
+
+    .food-list-panel::-webkit-scrollbar { width: 5px; }
+    .food-list-panel::-webkit-scrollbar-thumb { background: #c8bb8a; border-radius: 4px; }
+
+    .food-list-item {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.78rem;
+      color: #374151;
+      cursor: pointer;
+      line-height: 1.3;
+      border-left: 3px solid transparent;
+      transition: background 0.1s;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+    }
+
+    .food-list-item:hover { background: #f0fdf4; }
+
+    .food-list-item.active {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    .food-list-item .rank {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      flex-shrink: 0;
+      width: 18px;
+      padding-top: 1px;
+    }
+
+    #parallel-tooltip {
+      position: fixed;
+      pointer-events: none;
+      display: none;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      z-index: 999;
+      white-space: nowrap;
+      line-height: 1.8;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    }
+
+    #parallel-tooltip .tip-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 5px;
+      margin-bottom: 5px;
+    }
+
+    #parallel-tooltip .tip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    #parallel-tooltip .tip-val {
+      font-weight: 500;
+      color: #a5f3c0;
+    }
+
+    .parallel-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.5rem;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+    }
+
+    .parallel-controls .rank-by-row { margin-bottom: 0; }
+
+    .toggle-group {
+      display: flex;
+      border: 1px solid #c8bb8a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .toggle-btn {
+      padding: 0.45rem 0.85rem;
+      font-size: 0.85rem;
+      border: none;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .toggle-btn + .toggle-btn { border-left: 1px solid #c8bb8a; }
+
+    .toggle-btn.active {
+      background: #346739;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .search-row { position: relative; }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    #compare-search {
+      padding: 0.45rem 0.75rem;
+      border: 1px solid #c8bb8a;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      width: 220px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    #compare-search:focus { outline: none; box-shadow: 0 0 0 3px rgba(42,92,255,0.15); }
+
+    #search-suggestions {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 100%;
+      min-width: 280px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      z-index: 100;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .suggestion-item {
+      padding: 0.45rem 0.75rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: #374151;
+    }
+
+    .suggestion-item:hover, .suggestion-item.focused { background: #f0fdf4; }
+
+    #clear-compare {
+      padding: 0.35rem 0.6rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #fff;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+
+    #clear-compare:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+    .pc-line.compared {
+      stroke: #16a34a !important;
+      stroke-opacity: 1 !important;
+      stroke-width: 2.5px !important;
+      stroke-dasharray: 6 3;
+    }
+
+    @media (max-width: 700px) {
+      .compare-selectors { grid-template-columns: 1fr; }
+      .parallel-layout { grid-template-columns: 1fr; }
+      .food-list-panel { max-height: 200px; }
     }
   </style>
 </head>
@@ -197,15 +378,11 @@
       <div class="compare-selectors">
         <div class="selector-card">
           <label for="food-a">Food A</label>
-          <select id="food-a">
-            <option value="">Loading foods…</option>
-          </select>
+          <select id="food-a"><option value="">Loading foods…</option></select>
         </div>
         <div class="selector-card">
           <label for="food-b">Food B</label>
-          <select id="food-b">
-            <option value="">Loading foods…</option>
-          </select>
+          <select id="food-b"><option value="">Loading foods…</option></select>
         </div>
       </div>
 
@@ -229,24 +406,51 @@
       </div>
 
       <div class="chart-section">
-        <h2>Parallel coordinates, top 50 foods</h2>
-        <p class="chart-desc">Each line is one food. Axes show macronutrients per 100g. Hover a line to identify the food.</p>
+        <h2 id="parallel-title">Parallel coordinates, top 50 foods</h2>
+        <p class="chart-desc">Each line is one food. Hover to inspect values, click a name (or a line) to pin it in orange.</p>
 
-        <div class="rank-by-row">
-          <label for="parallel-sort">Rank by</label>
-          <select id="parallel-sort">
-            <option value="Energy_kcal">Calories</option>
-            <option value="Protein_g">Protein</option>
-            <option value="Carb_g">Carbohydrates</option>
-            <option value="Fat_g">Fat</option>
-            <option value="Sugar_g">Sugars</option>
-            <option value="Fiber_g">Dietary Fiber</option>
-          </select>
+        <div class="parallel-controls">
+          <div class="rank-by-row">
+            <label for="parallel-sort">Rank by</label>
+            <select id="parallel-sort">
+              <option value="Energy_kcal">Calories</option>
+              <option value="Protein_g">Protein</option>
+              <option value="Carb_g">Carbohydrates</option>
+              <option value="Fat_g">Fat</option>
+              <option value="Sugar_g">Sugars</option>
+              <option value="Fiber_g">Dietary Fiber</option>
+            </select>
+          </div>
+
+          <div class="rank-by-row">
+            <label>Option</label>
+            <div class="toggle-group" id="caloric-toggle">
+              <button class="toggle-btn active" data-val="top">Most</button>
+              <button class="toggle-btn" data-val="bottom">Least</button>
+            </div>
+          </div>
+
+          <div class="rank-by-row search-row">
+            <label for="compare-search">Compare food</label>
+            <div class="search-wrap">
+              <input type="text" id="compare-search" placeholder="Search a food to overlay…" autocomplete="off" />
+              <div id="search-suggestions"></div>
+            </div>
+            <button id="clear-compare" style="display:none;" title="Remove comparison">✕</button>
+          </div>
         </div>
 
         <div id="parallel-loading" class="loading-msg">Loading data…</div>
-        <div id="parallel-tooltip" style="position:fixed;pointer-events:none;display:none;background:#1a1a1a;color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.82rem;z-index:999;white-space:nowrap;"></div>
-        <svg id="parallel-svg" style="display:none;"></svg>
+
+        <div class="parallel-layout" id="parallel-layout" style="display:none;">
+          <svg id="parallel-svg"></svg>
+          <div class="food-list-panel" id="food-list"></div>
+        </div>
+
+        <div id="parallel-tooltip">
+          <div class="tip-name" id="tip-name"></div>
+          <div id="tip-rows"></div>
+        </div>
       </div>
 
     </div>
@@ -257,34 +461,29 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script>
 
-    // ── column definitions (your schema) ────────────────────────────────────────
     const CSV_FILE = './archive/cleaned_ingredients.csv';
 
-    // nutrients for radar chart
     const RADAR_NUTRIENTS = ['Protein_g', 'Carb_g', 'Fat_g', 'Sugar_g', 'Fiber_g'];
     const RADAR_LABELS    = ['Protein',   'Carbs',  'Fat',   'Sugars',  'Fiber'  ];
 
-    // nutrients for parallel coordinates
     const PARALLEL_NUTRIENTS = ['Protein_g', 'Carb_g', 'Fat_g', 'Sugar_g', 'Fiber_g', 'Energy_kcal'];
     const PARALLEL_LABELS    = ['Protein',   'Carbs',  'Fat',   'Sugars',  'Fiber',   'Calories'   ];
+    const PARALLEL_UNITS     = ['g',         'g',      'g',     'g',       'g',       'kcal'       ];
 
-    // keywords that make Sugar_g = 0 unreliable
     const SUSPICIOUS_SUGAR_KEYWORDS = [
-      'muffin', 'donut', 'doughnut', 'pie', 'cake', 'cookie',
-      'brownie', 'pastry', 'waffle', 'pancake', 'candy',
-      'chocolate', 'ice cream', 'pudding', 'tart', 'croissant',
-      'syrup', 'agutuk', 'arrowroot babyfood'
+      'muffin','donut','doughnut','pie','cake','cookie','brownie','pastry',
+      'waffle','pancake','candy','chocolate','ice cream','pudding','tart',
+      'croissant','syrup','agutuk','arrowroot babyfood'
     ];
-    const SUGAR_FREE_KEYWORDS = ['sugar free', 'sugarfree', 'no sugar', 'unsweetened'];
+    const SUGAR_FREE_KEYWORDS = ['sugar free','sugarfree','no sugar','unsweetened'];
 
     function isSugarUnreliable(row) {
-      const descrip = (row['Descrip'] || '').toLowerCase();
+      const d = (row['Descrip'] || '').toLowerCase();
       if (row['Sugar_g'] !== 0) return false;
-      if (SUGAR_FREE_KEYWORDS.some(kw => descrip.includes(kw))) return false;
-      return SUSPICIOUS_SUGAR_KEYWORDS.some(kw => descrip.includes(kw));
+      if (SUGAR_FREE_KEYWORDS.some(kw => d.includes(kw))) return false;
+      return SUSPICIOUS_SUGAR_KEYWORDS.some(kw => d.includes(kw));
     }
 
-    // ── minimal cleaning (no outlier removal — done in Python) ──────────────────
     function filterOutliers(data) {
       return data
         .filter(row => {
@@ -301,97 +500,62 @@
     async function loadData() {
       return new Promise((resolve, reject) => {
         Papa.parse(CSV_FILE, {
-          download: true,
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: results => resolve(filterOutliers(results.data)),
+          download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
+          complete: r => resolve(filterOutliers(r.data)),
           error: err => reject(err),
         });
       });
     }
 
-    // ── state ────────────────────────────────────────────────────────────────────
     let allFoodData = [];
     let radarChart  = null;
 
-    // ── dropdowns ────────────────────────────────────────────────────────────────
     function populateDropdowns(data) {
-      const names   = [...new Set(data.map(d => d.Descrip).filter(Boolean))].sort();
-      const selectA = document.getElementById('food-a');
-      const selectB = document.getElementById('food-b');
-      selectA.innerHTML = '';
-      selectB.innerHTML = '';
-      names.forEach(name => {
-        selectA.appendChild(new Option(name, name));
-        selectB.appendChild(new Option(name, name));
+      const names = [...new Set(data.map(d => d.Descrip).filter(Boolean))].sort();
+      ['food-a', 'food-b'].forEach((id, idx) => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = '';
+        names.forEach(n => sel.appendChild(new Option(n, n)));
+        sel.selectedIndex = idx;
       });
-      selectA.selectedIndex = 0;
-      selectB.selectedIndex = Math.min(1, names.length - 1);
     }
 
-    // ── radar chart ──────────────────────────────────────────────────────────────
     function renderRadarChart(food1, food2) {
       const vals1 = RADAR_NUTRIENTS.map(n => Math.max(0, food1[n] || 0));
       const vals2 = RADAR_NUTRIENTS.map(n => Math.max(0, food2[n] || 0));
-
       const canvas = document.getElementById('radarChart');
       canvas.style.display = 'block';
       document.getElementById('loading-msg').style.display  = 'none';
       document.getElementById('chart-legend').style.display = 'flex';
       document.getElementById('legend-a').textContent = food1.Descrip;
       document.getElementById('legend-b').textContent = food2.Descrip;
-
       if (radarChart) radarChart.destroy();
-
       radarChart = new Chart(canvas, {
         type: 'radar',
         data: {
           labels: RADAR_LABELS,
           datasets: [
-            {
-              label: food1.Descrip,
-              data: vals1,
-              backgroundColor: 'rgba(22,163,74,0.2)',
-              borderColor: 'rgba(22,163,74,0.9)',
-              pointBackgroundColor: 'rgba(22,163,74,0.9)',
-              pointRadius: 4,
-              borderWidth: 2,
-            },
-            {
-              label: food2.Descrip,
-              data: vals2,
-              backgroundColor: 'rgba(37,99,235,0.15)',
-              borderColor: 'rgba(37,99,235,0.9)',
-              pointBackgroundColor: 'rgba(37,99,235,0.9)',
-              pointRadius: 4,
-              borderWidth: 2,
-            }
+            { label: food1.Descrip, data: vals1,
+              backgroundColor: 'rgba(22,163,74,0.2)', borderColor: 'rgba(22,163,74,0.9)',
+              pointBackgroundColor: 'rgba(22,163,74,0.9)', pointRadius: 4, borderWidth: 2 },
+            { label: food2.Descrip, data: vals2,
+              backgroundColor: 'rgba(37,99,235,0.15)', borderColor: 'rgba(37,99,235,0.9)',
+              pointBackgroundColor: 'rgba(37,99,235,0.9)', pointRadius: 4, borderWidth: 2 }
           ]
         },
         options: {
           responsive: true,
           plugins: {
             legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.r.toFixed(1)} g`
-              }
-            }
+            tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.r.toFixed(1)} g` } }
           },
-          scales: {
-            r: {
-              beginAtZero: true,
-              ticks: {
-                font: { size: 11 },
-                backdropColor: 'transparent',
-                color: '#9ca3af',
-              },
-              grid:        { color: 'rgba(0,0,0,0.1)' },
-              pointLabels: { font: { size: 13, weight: '500' }, color: '#374151' },
-              angleLines:  { color: 'rgba(0,0,0,0.1)' },
-            }
-          }
+          scales: { r: {
+            beginAtZero: true,
+            ticks: { font: { size: 11 }, backdropColor: 'transparent', color: '#9ca3af' },
+            grid: { color: 'rgba(0,0,0,0.1)' },
+            pointLabels: { font: { size: 13, weight: '500' }, color: '#374151' },
+            angleLines: { color: 'rgba(0,0,0,0.1)' },
+          }}
         }
       });
     }
@@ -406,21 +570,30 @@
     }
 
     // ── parallel coordinates ─────────────────────────────────────────────────────
-    function renderParallelChart(data, sortCol) {
-      // fallback if column not found
+    function renderParallelChart(data, sortCol, direction, compareFood) {
       const rankBy = PARALLEL_NUTRIENTS.includes(sortCol) ? sortCol : 'Energy_kcal';
 
-      const top50 = [...data]
+      const sorted = [...data]
         .filter(d => (d[rankBy] || 0) > 0)
-        .sort((a, b) => (b[rankBy] || 0) - (a[rankBy] || 0))
-        .slice(0, 50);
+        .sort((a, b) => direction === 'bottom'
+          ? (a[rankBy] || 0) - (b[rankBy] || 0)
+          : (b[rankBy] || 0) - (a[rankBy] || 0));
 
-      const svg = document.getElementById('parallel-svg');
-      svg.style.display = 'block';
+      const top50 = sorted.slice(0, 50);
+
+      // Update title
+      const dirLabel = direction === 'bottom' ? 'least' : 'most';
+      const sortLabel = {Energy_kcal:'caloric',Protein_g:'protein-rich',Carb_g:'carb-rich',Fat_g:'fatty',Sugar_g:'sugary',Fiber_g:'fiber-rich'}[rankBy] || 'caloric';
+      document.getElementById('parallel-title').textContent = `Parallel coordinates, 50 ${dirLabel} ${sortLabel} foods`;
+
       document.getElementById('parallel-loading').style.display = 'none';
+      document.getElementById('parallel-layout').style.display  = 'grid';
 
-      const margin = { top: 48, right: 40, bottom: 20, left: 40 };
-      const totalW = svg.parentElement.clientWidth || 800;
+      const svg    = document.getElementById('parallel-svg');
+      const listEl = document.getElementById('food-list');
+
+      const margin = { top: 48, right: 20, bottom: 20, left: 40 };
+      const totalW = svg.parentElement.clientWidth || 650;
       const W = totalW - margin.left - margin.right;
       const H = 340;
 
@@ -431,52 +604,190 @@
       root.selectAll('*').remove();
       const g = root.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-      // one y scale per nutrient column
       const yScales = {};
       PARALLEL_NUTRIENTS.forEach(n => {
         const vals = top50.map(d => +d[n] || 0);
-        yScales[n] = d3.scaleLinear()
-          .domain([0, d3.max(vals) * 1.05])
-          .range([H, 0]);
+        yScales[n] = d3.scaleLinear().domain([0, d3.max(vals) * 1.05]).range([H, 0]);
       });
 
       const xScale = d3.scalePoint()
-        .domain(PARALLEL_NUTRIENTS)
-        .range([0, W])
-        .padding(0.1);
+        .domain(PARALLEL_NUTRIENTS).range([0, W]).padding(0.1);
 
-      function path(d) {
+      function pathD(d) {
         return d3.line()(PARALLEL_NUTRIENTS.map(n => [xScale(n), yScales[n](+d[n] || 0)]));
       }
 
       const tooltip = document.getElementById('parallel-tooltip');
+      const tipName = document.getElementById('tip-name');
+      const tipRows = document.getElementById('tip-rows');
 
-      g.selectAll('.pc-line')
+      let pinnedIndex = null;
+
+      // ── draw lines ─────────────────────────────────────────────────────────────
+      const linesG = g.append('g');
+      const lines = linesG.selectAll('.pc-line')
         .data(top50)
         .join('path')
         .attr('class', 'pc-line')
-        .attr('d', path)
-        .on('mousemove', (event, d) => {
-          tooltip.style.display = 'block';
-          tooltip.style.left = (event.clientX + 14) + 'px';
-          tooltip.style.top  = (event.clientY - 28) + 'px';
-          tooltip.textContent = d.Descrip || '—';
+        .attr('d', pathD)
+        .on('mousemove', function(event, d) {
+          const i = top50.indexOf(d);
+          if (pinnedIndex === i) return;
+          highlight(i);
+          showTooltip(event, d);
         })
-        .on('mouseleave', () => { tooltip.style.display = 'none'; });
+        .on('mouseleave', function(event, d) {
+          const i = top50.indexOf(d);
+          if (pinnedIndex === i) return;
+          unhighlight(i);
+          tooltip.style.display = 'none';
+        })
+        .on('click', function(event, d) {
+          togglePin(top50.indexOf(d));
+        });
 
-      // draw axes with human-readable labels
+      // ── build food list ────────────────────────────────────────────────────────
+      listEl.innerHTML = '';
+      top50.forEach((d, i) => {
+        const item = document.createElement('div');
+        item.className = 'food-list-item';
+        item.innerHTML = `<span class="rank">${i + 1}</span><span>${d.Descrip}</span>`;
+
+        item.addEventListener('mouseenter', () => {
+          if (pinnedIndex === i) return;
+          highlight(i);
+          // position tooltip to the left of the list
+          tipName.textContent = d.Descrip || '—';
+          tipRows.innerHTML = buildTipRows(d);
+          tooltip.style.display = 'block';
+          const rect = item.getBoundingClientRect();
+          tooltip.style.left = Math.max(8, rect.left - tooltip.offsetWidth - 12) + 'px';
+          tooltip.style.top  = (rect.top + rect.height / 2 - tooltip.offsetHeight / 2) + 'px';
+        });
+
+        item.addEventListener('mouseleave', () => {
+          if (pinnedIndex === i) return;
+          unhighlight(i);
+          tooltip.style.display = 'none';
+        });
+
+        item.addEventListener('click', () => togglePin(i));
+        listEl.appendChild(item);
+      });
+
+      // ── helpers ────────────────────────────────────────────────────────────────
+      function getItems() { return listEl.querySelectorAll('.food-list-item'); }
+
+      function highlight(i) {
+        lines.classed('dimmed', (_, j) => j !== i && j !== pinnedIndex);
+        d3.select(lines.nodes()[i]).raise().classed('hovered', true).classed('dimmed', false);
+      }
+
+      function unhighlight(i) {
+        d3.select(lines.nodes()[i]).classed('hovered', false);
+        if (pinnedIndex == null) {
+          lines.classed('dimmed', false);
+        } else {
+          lines.classed('dimmed', (_, j) => j !== pinnedIndex);
+          d3.select(lines.nodes()[pinnedIndex]).classed('dimmed', false);
+        }
+      }
+
+      function togglePin(i) {
+        const items = getItems();
+        if (pinnedIndex === i) {
+          // unpin
+          d3.select(lines.nodes()[i]).classed('pinned', false).classed('hovered', false);
+          lines.classed('dimmed', false);
+          items[i].classList.remove('active');
+          pinnedIndex = null;
+          tooltip.style.display = 'none';
+        } else {
+          // unpin previous
+          if (pinnedIndex != null) {
+            d3.select(lines.nodes()[pinnedIndex]).classed('pinned', false);
+            items[pinnedIndex].classList.remove('active');
+          }
+          pinnedIndex = i;
+          lines.classed('dimmed', (_, j) => j !== i);
+          d3.select(lines.nodes()[i]).raise()
+            .classed('pinned', true).classed('hovered', false).classed('dimmed', false);
+          items[i].classList.add('active');
+          items[i].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+
+      function buildTipRows(d) {
+        return PARALLEL_NUTRIENTS.map((n, i) => {
+          const val  = d[n] != null ? (+d[n]).toFixed(1) : '—';
+          const unit = d[n] != null ? ' ' + PARALLEL_UNITS[i] : '';
+          return `<div class="tip-row"><span>${PARALLEL_LABELS[i]}</span><span class="tip-val">${val}${unit}</span></div>`;
+        }).join('');
+      }
+
+      function showTooltip(event, d) {
+        tipName.textContent = d.Descrip || '—';
+        tipRows.innerHTML = buildTipRows(d);
+        tooltip.style.display = 'block';
+        tooltip.style.left = (event.clientX + 16) + 'px';
+        tooltip.style.top  = (event.clientY - tooltip.offsetHeight / 2) + 'px';
+      }
+
+      // ── draw compare food line ────────────────────────────────────────────────
+      if (compareFood) {
+        // clamp each value to the axis domain so the line stays inside the chart
+        function clampedY(n, val) {
+          const domain = yScales[n].domain();
+          const clamped = Math.min(Math.max(+val || 0, domain[0]), domain[1]);
+          return yScales[n](clamped);
+        }
+
+        const cPoints = PARALLEL_NUTRIENTS.map(n => [xScale(n), clampedY(n, compareFood[n])]);
+        const cPathD  = d3.line()(cPoints);
+
+        g.append('path')
+          .attr('class', 'pc-line compared')
+          .attr('d', cPathD)
+          .style('pointer-events', 'none');
+
+        // dots at each axis to show where the value actually sits (or is clamped)
+        PARALLEL_NUTRIENTS.forEach((n, i) => {
+          const raw    = +compareFood[n] || 0;
+          const domain = yScales[n].domain();
+          const isClamped = raw > domain[1];
+          g.append('circle')
+            .attr('cx', xScale(n))
+            .attr('cy', clampedY(n, raw))
+            .attr('r', 3.5)
+            .attr('fill', isClamped ? '#f59e0b' : '#16a34a')
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 1.5)
+            .style('pointer-events', 'none');
+        });
+
+        // label next to last axis
+        const lastN   = PARALLEL_NUTRIENTS[PARALLEL_NUTRIENTS.length - 1];
+        const labelY  = clampedY(lastN, compareFood[lastN]);
+        g.append('text')
+          .attr('x', xScale(lastN) + 8)
+          .attr('y', labelY)
+          .attr('dy', '0.35em')
+          .attr('fill', '#16a34a')
+          .attr('font-size', '11px')
+          .attr('font-weight', '600')
+          .text((compareFood.Descrip || '').split(',')[0].substring(0, 28));
+      }
+
+      // ── draw axes ──────────────────────────────────────────────────────────────
       PARALLEL_NUTRIENTS.forEach((n, i) => {
         const axisG = g.append('g')
           .attr('class', 'pc-axis')
           .attr('transform', `translate(${xScale(n)},0)`);
-
         axisG.call(d3.axisLeft(yScales[n]).ticks(5).tickSize(4));
-
         axisG.append('text')
           .attr('class', 'axis-label')
-          .attr('y', -14)
-          .attr('text-anchor', 'middle')
-          .text(PARALLEL_LABELS[i]);  // human-readable label
+          .attr('y', -14).attr('text-anchor', 'middle')
+          .text(PARALLEL_LABELS[i]);
       });
     }
 
@@ -484,17 +795,92 @@
     async function init() {
       allFoodData = await loadData();
       populateDropdowns(allFoodData);
-
       document.getElementById('food-a').addEventListener('change', onSelectionChange);
       document.getElementById('food-b').addEventListener('change', onSelectionChange);
 
-      const sortSelect = document.getElementById('parallel-sort');
-      sortSelect.addEventListener('change', () => {
-        renderParallelChart(allFoodData, sortSelect.value);
+      const sortSelect   = document.getElementById('parallel-sort');
+      const toggleBtns   = document.querySelectorAll('.toggle-btn');
+      const searchInput  = document.getElementById('compare-search');
+      const suggestions  = document.getElementById('search-suggestions');
+      const clearBtn     = document.getElementById('clear-compare');
+
+      let direction   = 'top';
+      let compareFood = null;
+
+      function rerender() {
+        renderParallelChart(allFoodData, sortSelect.value, direction, compareFood);
+      }
+
+      sortSelect.addEventListener('change', rerender);
+
+      toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          toggleBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          direction = btn.dataset.val;
+          rerender();
+        });
       });
 
+      // ── search autocomplete ──────────────────────────────────────────────────
+      const allNames = [...new Set(allFoodData.map(d => d.Descrip).filter(Boolean))].sort();
+      let focusedIdx = -1;
+
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim().toLowerCase();
+        focusedIdx = -1;
+        if (!q) { suggestions.style.display = 'none'; return; }
+        const matches = allNames.filter(n => n.toLowerCase().includes(q)).slice(0, 20);
+        if (!matches.length) { suggestions.style.display = 'none'; return; }
+        suggestions.innerHTML = matches.map((n, i) =>
+          `<div class="suggestion-item" data-name="${n.replace(/"/g,'&quot;')}">${n}</div>`
+        ).join('');
+        suggestions.style.display = 'block';
+        suggestions.querySelectorAll('.suggestion-item').forEach(el => {
+          el.addEventListener('mousedown', e => {
+            e.preventDefault();
+            selectCompare(el.dataset.name);
+          });
+        });
+      });
+
+      searchInput.addEventListener('keydown', e => {
+        const items = suggestions.querySelectorAll('.suggestion-item');
+        if (e.key === 'ArrowDown') {
+          focusedIdx = Math.min(focusedIdx + 1, items.length - 1);
+          items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx));
+        } else if (e.key === 'ArrowUp') {
+          focusedIdx = Math.max(focusedIdx - 1, 0);
+          items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx));
+        } else if (e.key === 'Enter' && focusedIdx >= 0) {
+          selectCompare(items[focusedIdx].dataset.name);
+        } else if (e.key === 'Escape') {
+          suggestions.style.display = 'none';
+        }
+      });
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.search-wrap')) suggestions.style.display = 'none';
+      });
+
+      clearBtn.addEventListener('click', () => {
+        compareFood = null;
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        suggestions.style.display = 'none';
+        rerender();
+      });
+
+      function selectCompare(name) {
+        compareFood = allFoodData.find(d => d.Descrip === name) || null;
+        searchInput.value = name;
+        suggestions.style.display = 'none';
+        clearBtn.style.display = compareFood ? 'inline-block' : 'none';
+        rerender();
+      }
+
       onSelectionChange();
-      renderParallelChart(allFoodData, sortSelect.value);
+      rerender();
     }
 
     init();
